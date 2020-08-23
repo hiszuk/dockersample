@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>DOCKER体験</title>
+        <style>
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="docker体験">DOCKER体験</h1>
+<ul>
+<li><a href="#docker%E4%BD%93%E9%A8%93">DOCKER体験</a></li>
+<li><a href="#docker%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E5%8B%95%E3%81%8B%E3%81%97%E3%81%A6%E3%81%BF%E3%82%88%E3%81%861%E5%9B%9E%E7%9B%AE">Dockerコンテナを動かしてみよう(1回目)</a>
+<ul>
+<li><a href="#dockerdesktop%E3%82%92%E8%B5%B7%E5%8B%95%E3%81%97%E3%81%BE%E3%81%99">DockerDesktopを起動します</a></li>
+<li><a href="#docker%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E8%B5%B7%E5%8B%95%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%99">Dockerコンテナを起動してみます</a>
+<ul>
+<li><a href="#%E8%A1%A8%E7%A4%BA%E3%82%92%E6%9B%B8%E3%81%8D%E6%8F%9B%E3%81%88%E3%81%BE%E3%81%99">表示を書き換えます</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E5%81%9C%E6%AD%A2%E3%81%97%E3%81%BE%E3%81%99">コンテナを停止します</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E7%A2%BA%E8%AA%8D">コンテナの確認</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E5%89%8A%E9%99%A4">コンテナの削除</a></li>
+</ul>
+</li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E6%93%8D%E4%BD%9C">イメージの操作</a>
+<ul>
+<li><a href="#httpd%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E7%A2%BA%E8%AA%8D">httpdイメージの確認</a></li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E5%89%8A%E9%99%A4">イメージの削除</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#docker%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%9E%E3%82%A4%E3%82%BA%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E4%BD%9C%E6%88%901%E5%9B%9E%E7%9B%AE">Dockerカスタマイズイメージの作成(1回目)</a>
+<ul>
+<li><a href="#httpd%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E7%A7%BB%E5%8B%95">httpdディレクトリへ移動</a></li>
+<li><a href="#dockerfile%E7%A2%BA%E8%AA%8D">Dockerfile確認</a></li>
+<li><a href="#public-htmlindexhtml%E7%A2%BA%E8%AA%8D">public-html/index.html確認</a></li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89">イメージファイルのビルド</a></li>
+<li><a href="#%E4%BD%9C%E6%88%90%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%8B%E3%82%89%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E8%B5%B7%E5%8B%95">作成イメージからコンテナ起動</a></li>
+</ul>
+</li>
+<li><a href="#mysql%E3%81%AEdocker%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E4%BD%9C%E3%82%8B2%E5%9B%9E%E7%9B%AE">MySQLのDockerイメージを作る(2回目)</a>
+<ul>
+<li><a href="#dockerfile%E7%A2%BA%E8%AA%8D-1">Dockerfile確認</a></li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89">イメージのビルド</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E8%B5%B7%E5%8B%95">コンテナの起動</a></li>
+<li><a href="#%E5%88%9D%E6%9C%9F%E8%A8%AD%E5%AE%9A%E7%A2%BA%E8%AA%8D">初期設定確認</a></li>
+</ul>
+</li>
+<li><a href="#%E3%83%90%E3%83%83%E3%82%AF%E3%82%A8%E3%83%B3%E3%83%89%E3%81%AEdocker%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E4%BD%9C%E3%82%8B2%E5%9B%9E%E7%9B%AE">バックエンドのDockerイメージを作る(2回目)</a>
+<ul>
+<li><a href="#dockerfile%E7%A2%BA%E8%AA%8D-2">Dockerfile確認</a></li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89-1">イメージのビルド</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E8%B5%B7%E5%8B%95-1">コンテナの起動</a></li>
+<li><a href="#%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">動作確認</a></li>
+</ul>
+</li>
+<li><a href="#%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88%E3%82%A8%E3%83%B3%E3%83%89%E3%81%AEdocker%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E4%BD%9C%E3%82%8B2%E5%9B%9E%E7%9B%AE">フロントエンドのDockerイメージを作る(2回目)</a>
+<ul>
+<li><a href="#dockefile%E7%A2%BA%E8%AA%8D">Dockefile確認</a></li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89-2">イメージのビルド</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E8%B5%B7%E5%8B%95-2">コンテナの起動</a></li>
+<li><a href="#%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D-1">動作確認</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E7%B5%82%E4%BA%86">コンテナの終了</a></li>
+</ul>
+</li>
+<li><a href="#%E3%83%9E%E3%83%AB%E3%83%81%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E5%AE%9F%E8%A1%8C2%E5%9B%9E%E7%9B%AE">マルチコンテナの実行(2回目)</a>
+<ul>
+<li><a href="#docker-composeyml%E5%86%85%E5%AE%B9%E7%A2%BA%E8%AA%8D">docker-compose.yml内容確認</a></li>
+<li><a href="#%E3%83%9E%E3%83%AB%E3%83%81%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E8%B5%B7%E5%8B%95">マルチコンテナ起動</a></li>
+<li><a href="#db%E5%88%9D%E6%9C%9F%E8%A8%AD%E5%AE%9A">DB初期設定</a></li>
+<li><a href="#%E5%90%84%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">各コンテナの動作確認</a>
+<ul>
+<li><a href="#db%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">DBコンテナ動作確認</a></li>
+<li><a href="#restapi%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">RESTAPIコンテナ動作確認</a></li>
+<li><a href="#web%E3%82%A2%E3%83%97%E3%83%AA%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">WEBアプリ動作確認</a></li>
+</ul>
+</li>
+<li><a href="#%E3%83%9E%E3%83%AB%E3%83%81%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%AE%E3%83%93%E3%83%AB%E3%83%892%E5%9B%9E%E7%9B%AE">マルチコンテナのビルド(2回目)</a>
+<ul>
+<li><a href="#%E4%B8%80%E6%97%A6%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E6%AD%A2%E3%82%81%E3%81%A6%E5%89%8A%E9%99%A4%E3%81%97%E3%81%BE%E3%81%99">一旦コンテナを止めて削除します</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E3%83%93%E3%83%AB%E3%83%89%E3%81%97%E3%81%BE%E3%81%99">コンテナイメージをビルドします</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1 id="dockerコンテナを動かしてみよう1回目">Dockerコンテナを動かしてみよう(1回目)</h1>
+<p>既存のDockerイメージを取得しコンテナを起動します。</p>
+<h2 id="dockerdesktopを起動します">DockerDesktopを起動します</h2>
+<p>DockerDesktopアプリを管理者モードで起動する</p>
+<p>DockerDesctopで、proxy設定などを確認する</p>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-01.png" alt=""></p>
+<h2 id="dockerコンテナを起動してみます">Dockerコンテナを起動してみます</h2>
+<p>下記コマンドを入力し、apacheのWEBサービスを起動してみます。</p>
+<pre><code class="language-cmd"><div>&gt; docker run -dit --name my-apache-app -p <span class="hljs-number">8181</span>:<span class="hljs-number">80</span> httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>
+Unable to <span class="hljs-built_in">find</span> image 'httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>' locally
+<span class="hljs-number">2</span>.<span class="hljs-number">4</span>: Pulling from library/httpd
+<span class="hljs-function">bf5952930446: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+3<span class="hljs-title">d3fecf6569b</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">b5fc3125d912</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+679<span class="hljs-title">d69c01e90</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+76291586768<span class="hljs-title">e</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">Digest</span>: <span class="hljs-title">sha256</span>:3<span class="hljs-title">cbdff4bc16681541885ccf1524a532afa28d2a6578ab7c2d5154a7abc182379</span>
+<span class="hljs-title">Status</span>: <span class="hljs-title">Downloaded</span> <span class="hljs-title">newer</span> <span class="hljs-title">image</span> <span class="hljs-title">for</span> <span class="hljs-title">httpd</span>:2.4
+6<span class="hljs-title">fca510eab6511414e336c88e002a8f1e6c5b185c2885f6b9b4d3c443b1903f4</span>
+</span></div></code></pre>
+<p><a href="http://localhost:8181">http://localhost:8181</a>　にアクセスしてみてください。</p>
+<blockquote>
+<h1>It works!</h1>
+</blockquote>
+<p>と表示されたでしょうか？</p>
+<p>localにhttpd:2.4のイメージがないので、DockerHubからイメージを取得し、そのイメージからコンテナを起動している状態となります。
+<img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-02.png" alt=""></p>
+<h3 id="表示を書き換えます">表示を書き換えます</h3>
+<p>では、次に稼働しているコンテナに入って、表示を書き換えてみます。</p>
+<pre><code class="language-cmd"><div>&gt; docker exec -it my-apache-app /bin/bash
+</div></code></pre>
+<pre><code class="language-sh"><div>(カレントディレクトリを確認します)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2<span class="hljs-comment"># pwd</span>
+/usr/<span class="hljs-built_in">local</span>/apache2
+
+(/usr/<span class="hljs-built_in">local</span>/apache2/htdocsに移動します)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2<span class="hljs-comment"># cd htdocs</span>
+
+(ファイルリストを確認します)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<span class="hljs-comment"># ls -l</span>
+total 4
+-rw-r--r-- 1 root src 45 Jun 11  2007 index.html
+
+(index.htmlの内容を確認します)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<span class="hljs-comment"># cat index.html</span>
+&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;
+
+(ItをMy Httpdに書き換えます)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<span class="hljs-comment"># cp index.html tmp;sed 's/It/My Httpd/' tmp &gt; index.html;rm tmp</span>
+
+(index.htmlの内容を再度確認します)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<span class="hljs-comment"># cat index.html</span>
+&lt;html&gt;&lt;body&gt;&lt;h1&gt;My Httpd works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;
+
+(コンテナから抜けます)
+root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<span class="hljs-comment"># exit</span>
+</div></code></pre>
+<p><a href="http://localhost:8181">http://localhost:8181</a>　にアクセスしてみてください。</p>
+<blockquote>
+<h1>My Httpd works!</h1>
+</blockquote>
+<p>と表示されたでしょうか？</p>
+<p>次に新しくコンテナを起動してみます。</p>
+<pre><code class="language-cmd"><div>&gt; docker run -dit --name my-apache-app2 -p <span class="hljs-number">8182</span>:<span class="hljs-number">80</span> httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>
+</div></code></pre>
+<p><a href="http://localhost:8182">http://localhost:8182</a>　にアクセスしてみてください。</p>
+<blockquote>
+<h1>It works!</h1>
+</blockquote>
+<p>と表示されたでしょうか？</p>
+<p><strong>My Httpd works!</strong> ではありませんでした。<br/>
+これは、<strong>『コンテナがイメージから新しく生成される』</strong> ためです。</p>
+<p>先ほど表示する文字を変更した時は、<strong>『コンテナ』の中</strong>に入って変更しました。これは、そのコンテナにしか有効ではありません。<br/>
+また、AWSやAzureなどのマネージドされたコンテナ環境ではコンテナは停止と同時に破棄されるのが普通なので、必要な設定はイメージ側に持たせます。</p>
+<p>httpd:2.4 というDocker公式イメージから、my-apache-app というコンテナと、my-apache-app2 というコンテナが生成され、それぞれ独立して動くようになります。
+<img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-03.png" alt=""></p>
+<h3 id="コンテナを停止します">コンテナを停止します</h3>
+<p>GUIから停止しする場合は「■」stopマークをクリックします。<br/>
+コマンドラインから停止する場合は以下のように入力します。</p>
+<pre><code class="language-cmd"><div>&gt; docker stop my-apache-app2 my-apache-app
+</div></code></pre>
+<h3 id="コンテナの確認">コンテナの確認</h3>
+<p>どのようなコンテナが存在するか確認します</p>
+<pre><code class="language-cmd"><div>&gt; docker container ls -a
+CONTAINER ID        IMAGE                                             COMMAND                  CREATED             STATUS                          PORTS               NAMES
+<span class="hljs-number">166</span>a8438a1e0        httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>                                         "httpd-foreground"       <span class="hljs-number">34</span> minutes ago      Exited (<span class="hljs-number">0</span>) <span class="hljs-number">30</span> minutes ago                           my-apache-app2
+<span class="hljs-number">4118</span>d90bb5d0        httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>                                         "httpd-foreground"       <span class="hljs-number">43</span> minutes ago      Exited (<span class="hljs-number">0</span>) About a minute ago                       my-apache-app
+</div></code></pre>
+<h3 id="コンテナの削除">コンテナの削除</h3>
+<p>GUIから停止しする場合はゴミ箱アイコンをクリックします。<br/>
+コマンドラインから停止する場合は以下のように入力します。</p>
+<pre><code class="language-cmd"><div>&gt; docker container rm my-apache-app my-apache-app2
+my-apache-app
+my-apache-app2
+</div></code></pre>
+<h2 id="イメージの操作">イメージの操作</h2>
+<h3 id="httpdイメージの確認">httpdイメージの確認</h3>
+<pre><code class="language-cmd"><div>&gt; docker image ls httpd
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+httpd               <span class="hljs-number">2</span>.<span class="hljs-number">4</span>                 a6ea92c35c43        <span class="hljs-number">2</span> days ago          <span class="hljs-number">166</span>MB
+</div></code></pre>
+<h3 id="イメージの削除">イメージの削除</h3>
+<pre><code class="language-cmd"><div>&gt; docker image rm httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>
+<span class="hljs-function">Untagged: <span class="hljs-title">httpd</span>:2.4
+<span class="hljs-title">Untagged</span>: <span class="hljs-title">httpd</span>@<span class="hljs-title">sha256</span>:3<span class="hljs-title">cbdff4bc16681541885ccf1524a532afa28d2a6578ab7c2d5154a7abc182379</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256:a6ea92c35c43206ac8a508b2be7d6d6b5ecf5f40e7a9042a35669bcbcb2da201</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256</span>:074<span class="hljs-title">e0e3314f787dd955937eb5b17694b1f7fc64631f404223a62e2a4a1292fb6</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256:b05020dd1c0b21291751d69304826e21518a0fa056229bb5c5646a2f80aa2ce5</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256</span>:0724735<span class="hljs-title">f53919994876490bd1e9633792f9533a646f2f5cd6a2c607e4c86909a</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256</span>:378<span class="hljs-title">cb5ce0d682b9abc91a9cf70ffc7b0ab650d282d90c60439af8158c944041d</span>
+<span class="hljs-title">Deleted</span>: <span class="hljs-title">sha256:d0f104dc0a1f9c744b65b23b3fd4d4d3236b4656e67f776fe13f8ad8423b955c</span>
+</span></div></code></pre>
+<hr>
+<h1 id="dockerカスタマイズイメージの作成1回目">Dockerカスタマイズイメージの作成(1回目)</h1>
+<p>アプリ毎の設定をベースイメージに対してレイヤーイメージを重ねて、独自のDockerイメージを作成します。</p>
+<h2 id="httpdディレクトリへ移動">httpdディレクトリへ移動</h2>
+<pre><code class="language-cmd"><div>&gt; <span class="hljs-built_in">cd</span> httpd
+</div></code></pre>
+<h2 id="dockerfile確認">Dockerfile確認</h2>
+<p>httpdディレクトリ直下のDockerfileというファイルを確認します</p>
+<p><code>Dockerfile</code></p>
+<pre><code class="language-Dockerfile"><div><span class="hljs-keyword">FROM</span> httpd:<span class="hljs-number">2.4</span>                                  <span class="hljs-comment"># httpd:2.4をベースイメージにする</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> ./public-html/ /usr/<span class="hljs-built_in">local</span>/apache2/htdocs/  <span class="hljs-comment"># ローカルのpublic-htmlフォルダをhtdocsにコピーする</span></span>
+</div></code></pre>
+<h2 id="public-htmlindexhtml確認">public-html/index.html確認</h2>
+<p><code>public-html/index.html</code></p>
+<pre><code class="language-html"><div><span class="hljs-meta">&lt;!DOCTYPE html&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">"en"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">"utf-8"</span> /&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>Httpd公式イメージに追加<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>Indexをアプリ独自に書き換えた例<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
+</div></code></pre>
+<h2 id="イメージファイルのビルド">イメージファイルのビルド</h2>
+<pre><code class="language-cmd"><div>&gt; docker image build -t sample/httpd:latest .
+Sending build context to Docker daemon  <span class="hljs-number">3</span>.<span class="hljs-number">584</span>kB
+Step <span class="hljs-number">1</span>/<span class="hljs-number">2</span> : FROM httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>
+<span class="hljs-number">2</span>.<span class="hljs-number">4</span>: Pulling from library/httpd
+    :
+<span class="hljs-function">Status: <span class="hljs-title">Downloaded</span> <span class="hljs-title">newer</span> <span class="hljs-title">image</span> <span class="hljs-title">for</span> <span class="hljs-title">httpd</span>:2.4
+ ---&gt; <span class="hljs-title">a6ea92c35c43</span>
+<span class="hljs-title">Step</span> 2/2 : <span class="hljs-title">COPY</span> ./<span class="hljs-title">public</span>-<span class="hljs-title">html</span>/ /<span class="hljs-title">usr</span>/<span class="hljs-title">local</span>/<span class="hljs-title">apache2</span>/<span class="hljs-title">htdocs</span>/
+ ---&gt; 2405<span class="hljs-title">c2b9ec8f</span>
+<span class="hljs-title">Successfully</span> <span class="hljs-title">built</span> 2405<span class="hljs-title">c2b9ec8f</span>
+<span class="hljs-title">Successfully</span> <span class="hljs-title">tagged</span> <span class="hljs-title">sample</span>/<span class="hljs-title">httpd:latest</span>
+    :
+</span></div></code></pre>
+<p>確認してみましょう。</p>
+<pre><code class="language-cmd"><div>&gt; docker image ls sample/httpd
+REPOSITORY          TAG                 IMAGE ID            CREATED              SIZE
+sample/httpd        latest              <span class="hljs-number">2405</span>c2b9ec8f        About a minute ago   <span class="hljs-number">166</span>MB
+</div></code></pre>
+<h2 id="作成イメージからコンテナ起動">作成イメージからコンテナ起動</h2>
+<pre><code class="language-cmd"><div>&gt; docker run -dit --rm --name my-httpd -p <span class="hljs-number">8181</span>:<span class="hljs-number">80</span> sample/httpd:latest
+<span class="hljs-number">1</span>b9899597e799045946afc4ac778cba3f418be1485104045cde86121957da95b
+</div></code></pre>
+<p><a href="http://localhost:8181">http://localhost:8181</a>　にアクセスしてみてください。</p>
+<blockquote>
+<h2>Httpd公式イメージに追加</h2>
+<h3>Indexをアプリ独自に書き換えた例</h3>
+</blockquote>
+<p>と表示されたでしょうか？</p>
+<hr>
+<h1 id="mysqlのdockerイメージを作る2回目">MySQLのDockerイメージを作る(2回目)</h1>
+<p>dbフォルダに移動します。</p>
+<h2 id="dockerfile確認-1">Dockerfile確認</h2>
+<p><code>Dockefile</code> を確認します。</p>
+<pre><code class="language-Dockerfile"><div><span class="hljs-keyword">FROM</span> mysql:<span class="hljs-number">5.7</span>          <span class="hljs-comment"># ベースイメージ</span>
+
+<span class="hljs-comment"># (1) プロキシ設定</span>
+<span class="hljs-keyword">ENV</span> http_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>
+<span class="hljs-keyword">ENV</span> https_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>
+<span class="hljs-keyword">ENV</span> no_proxy <span class="hljs-string">'127.0.0.1,localhost'</span>
+
+<span class="hljs-comment"># (2) パッケージアップデート</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> apt-get update      <span class="hljs-comment"># ベースイメージのアップデート</span></span>
+
+<span class="hljs-comment"># (3) スクリプトと各種設定ファイルのコピー</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> etc/mysql/conf.d/mysql.cnf /etc/mysql/conf.d/</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> prepare.sh /usr/<span class="hljs-built_in">local</span>/bin/</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> init-data.sh /usr/<span class="hljs-built_in">local</span>/bin/</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> sql /sql</span>
+
+<span class="hljs-comment"># (4) mysqldの実行</span>
+<span class="hljs-keyword">CMD</span><span class="bash"> [<span class="hljs-string">"mysqld"</span>]</span>
+</div></code></pre>
+<h2 id="イメージのビルド">イメージのビルド</h2>
+<p>タグ名を<code>sample/mysql:latest</code>としてビルドします。</p>
+<pre><code class="language-cmd"><div>&gt; docker image build -t sample/mysql:latest .
+Sending build context to Docker daemon  <span class="hljs-number">11</span>.<span class="hljs-number">78</span>kB
+Step <span class="hljs-number">1</span>/<span class="hljs-number">11</span> : FROM mysql:<span class="hljs-number">5</span>.<span class="hljs-number">7</span>
+ ---&gt; <span class="hljs-number">718</span>a6da099d8
+Step <span class="hljs-number">2</span>/<span class="hljs-number">11</span> : ENV http_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Running <span class="hljs-keyword">in</span> <span class="hljs-number">6</span>d9b88f33425
+Removing intermediate container <span class="hljs-number">6</span>d9b88f33425
+ ---&gt; <span class="hljs-number">7</span>f483d82b48e
+Step <span class="hljs-number">3</span>/<span class="hljs-number">11</span> : ENV https_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Running <span class="hljs-keyword">in</span> abd0f0a35c9c
+Removing intermediate container abd0f0a35c9c
+ ---&gt; e2b115eb5a6a
+Step <span class="hljs-number">4</span>/<span class="hljs-number">11</span> : ENV no_proxy '<span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>,localhost'
+ ---&gt; Running <span class="hljs-keyword">in</span> cc6715fdb204
+Removing intermediate container cc6715fdb204
+ ---&gt; <span class="hljs-number">77333</span>bd9a791
+Step <span class="hljs-number">5</span>/<span class="hljs-number">11</span> : RUN apt-get update
+ ---&gt; Running <span class="hljs-keyword">in</span> <span class="hljs-number">1</span>bb39c9083ab
+    :
+Step <span class="hljs-number">6</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/
+ ---&gt; <span class="hljs-number">769</span>d74db4a5e
+Step <span class="hljs-number">7</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> etc/mysql/conf.d/mysql.cnf /etc/mysql/conf.d/
+ ---&gt; dfd8939b9cf8
+Step <span class="hljs-number">8</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> prepare.sh /usr/local/bin/
+ ---&gt; <span class="hljs-number">7</span>ef54d327323
+Step <span class="hljs-number">9</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> init-data.sh /usr/local/bin/
+ ---&gt; <span class="hljs-number">40</span>e7d181f8e5
+Step <span class="hljs-number">10</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> sql /sql
+ ---&gt; fb58ba4fb5eb
+Step <span class="hljs-number">11</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">CMD</span> ["mysqld"]
+ ---&gt; Running <span class="hljs-keyword">in</span> a5d46d036d57
+Removing intermediate container a5d46d036d57
+ ---&gt; f15a48e9344d
+Successfully built f15a48e9344d
+Successfully tagged sample/mysql:latest
+SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have 
+</div></code></pre>
+<h2 id="コンテナの起動">コンテナの起動</h2>
+<p>コンテナ名を<code>my-sql</code>として終了時自動削除モード(--rm)で起動します。<br/>
+その際にMYSQL用のパラメータを環境変数として渡して(-e XXX=YYY)起動します。</p>
+<pre><code class="language-cmd"><div>&gt; docker run -d --name my-sql --rm -e MYSQL_ROOT_PASSWORD=mysql -e MYSQL_DATABASE=sampledb -e MYSQL_APP_USER=sample -e MYSQL_APP_PASSWORD=sample -e MYSQL_HOST=localhost -p <span class="hljs-number">3306</span>:<span class="hljs-number">3306</span> sample/mysql:latest
+</div></code></pre>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-04.png" alt=""></p>
+<p>dbが完全に立ち上がったことをログで確認します。</p>
+<h2 id="初期設定確認">初期設定確認</h2>
+<p>コンテナ起動後にユーザー作成とテーブル作成を行い、初期データ登録を確認します。</p>
+<pre><code class="language-cmd"><div>&gt; docker exec -it my-sql /usr/local/bin/prepare.sh
+&gt; docker exec -it my-sql /usr/local/bin/init-data.sh
+&gt; docker exec -it my-sql mysql -u sample -psample sampledb
+<span class="hljs-function">mysql: [<span class="hljs-title">Warning</span>] <span class="hljs-title">Using</span> <span class="hljs-title">a</span> <span class="hljs-title">password</span> <span class="hljs-title">on</span> <span class="hljs-title">the</span> <span class="hljs-title">command</span> <span class="hljs-title">line</span> <span class="hljs-title">interface</span> <span class="hljs-title">can</span> <span class="hljs-title">be</span> <span class="hljs-title">insecure</span>.
+  :
+<span class="hljs-title">mysql</span>&gt; <span class="hljs-title">select</span> <span class="hljs-title">id</span>, <span class="hljs-title">title</span> <span class="hljs-title">from</span> <span class="hljs-title">items</span>;
++----+-----------------------------------------------------------+
+| <span class="hljs-title">id</span> | <span class="hljs-title">title</span>                                                     |
++----+-----------------------------------------------------------+
+|  1 | <span class="hljs-title">WEB</span> <span class="hljs-title">Application</span>作成                                       |
+|  2 | <span class="hljs-title">RESTful</span> <span class="hljs-title">API</span>作成                                           |
+|  3 | フロントエンドとバックエンドを結合                        |
+|  4 | <span class="hljs-title">MySQL</span>の<span class="hljs-title">Docker</span>イメージを作成する                           |
+|  5 | バックエンドの<span class="hljs-title">Docker</span>イメージを作成する                    |
+|  6 | フロントエンドの<span class="hljs-title">Docker</span>イメージを作成する                  |
+|  7 | <span class="hljs-title">Docker</span>-<span class="hljs-title">compose</span>でパッケージ化する                          |
++----+-----------------------------------------------------------+
+7 <span class="hljs-title">rows</span> <span class="hljs-title">in</span> <span class="hljs-title">set</span> (0.00 <span class="hljs-title">sec</span>)
+
+<span class="hljs-title">mysql</span>&gt; <span class="hljs-title">quit</span>
+<span class="hljs-title">Bye</span>
+</span></div></code></pre>
+<hr>
+<h1 id="バックエンドのdockerイメージを作る2回目">バックエンドのDockerイメージを作る(2回目)</h1>
+<p><code>api</code>フォルダに移動します。</p>
+<h2 id="dockerfile確認-2">Dockerfile確認</h2>
+<p><code>Dockerfile</code>の内容を確認します。</p>
+<pre><code class="language-Dockerfile"><div><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jdk-alpine             <span class="hljs-comment"># openjdk:8 をベースイメージとします</span>
+
+<span class="hljs-keyword">ADD</span><span class="bash"> libs/webapi-1.0.0.jar app.jar     <span class="hljs-comment"># jarファイルをapp.jarとしてコピーします</span></span>
+
+<span class="hljs-keyword">ENV</span> JAVA_OPS=<span class="hljs-string">"-Xms64m -Xmx512m"</span>       <span class="hljs-comment"># メモリオプション指定します</span>
+
+<span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> <span class="hljs-built_in">exec</span> java <span class="hljs-variable">$JAVA_OPTS</span> -Djava.security.egd=file:/dev/./urandom -jar /app.jar <span class="hljs-comment"># 起動コマンド</span></span>
+</div></code></pre>
+<p>環境は外部から設定します。</p>
+<h2 id="イメージのビルド-1">イメージのビルド</h2>
+<p><code>sample/api:latest</code>というタグ名でイメージをビルドします。</p>
+<pre><code class="language-cmd"><div>&gt; docker image build -t sample/api:latest .
+Sending build context to Docker daemon  <span class="hljs-number">21</span>.<span class="hljs-number">61</span>MB
+Step <span class="hljs-number">1</span>/<span class="hljs-number">4</span> : FROM openjdk:<span class="hljs-number">8</span>-jdk-alpine
+Step <span class="hljs-number">2</span>/<span class="hljs-number">4</span> : ADD libs/webapi-<span class="hljs-number">1</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.jar app.jar
+Step <span class="hljs-number">3</span>/<span class="hljs-number">4</span> : ENV JAVA_OPS="-Xms64m -Xmx512m"
+Step <span class="hljs-number">4</span>/<span class="hljs-number">4</span> : ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app.jar
+Successfully tagged sample/api:latest
+</div></code></pre>
+<h2 id="コンテナの起動-1">コンテナの起動</h2>
+<pre><code class="language-cmd"><div>&gt; docker run -d --rm --name rest-api -p <span class="hljs-number">2000</span>:<span class="hljs-number">2000</span> sample/api:latest
+</div></code></pre>
+<h2 id="動作確認">動作確認</h2>
+<p>postman, WEBブラウザ, またはcurlで<code>http://localhost:2000/</code>にアクセスします。</p>
+<pre><code class="language-cmd"><div>&gt; curl 'http://localhost:<span class="hljs-number">2000</span>/'
+
+StatusCode        : <span class="hljs-number">200</span>
+StatusDescription :
+Content           : The backend of started...
+RawContent        : HTTP/<span class="hljs-number">1</span>.<span class="hljs-number">1</span> <span class="hljs-number">200</span>
+                    Content-Length: <span class="hljs-number">25</span>
+                    Content-<span class="hljs-built_in">Type</span>: text/plain;charset=UTF-<span class="hljs-number">8</span>
+<span class="hljs-function">                    Date: <span class="hljs-title">Sun</span>, 23 <span class="hljs-title">Aug</span> 2020 08:59:38 <span class="hljs-title">GMT</span>
+
+                    <span class="hljs-title">The</span> <span class="hljs-title">backend</span> <span class="hljs-title">of</span> <span class="hljs-title">started</span>...
+<span class="hljs-title">Forms</span>             : {}
+<span class="hljs-title">Headers</span>           : {[<span class="hljs-title">Content</span>-<span class="hljs-title">Length</span>, 25], [<span class="hljs-title">Content</span>-<span class="hljs-title">Type</span>, <span class="hljs-title">text</span>/<span class="hljs-title">plain</span>;<span class="hljs-title">charset</span>=<span class="hljs-title">UTF</span>-8], [<span class="hljs-title">Date</span>, <span class="hljs-title">Sun</span>, 23 <span class="hljs-title">Aug</span> 2020 08:59:38 <span class="hljs-title">GMT</span>]}
+<span class="hljs-title">Images</span>            : {}
+<span class="hljs-title">InputFields</span>       : {}
+<span class="hljs-title">Links</span>             : {}
+<span class="hljs-title">ParsedHtml</span>        : <span class="hljs-title">mshtml.HTMLDocumentClass</span>
+<span class="hljs-title">RawContentLength</span>  : 25
+</span></div></code></pre>
+<h1 id="フロントエンドのdockerイメージを作る2回目">フロントエンドのDockerイメージを作る(2回目)</h1>
+<p><code>web</code>フォルダに移動します。</p>
+<h2 id="dockefile確認">Dockefile確認</h2>
+<p><code>Dockerfile</code>の内容を確認します。</p>
+<pre><code class="language-Dockerfile"><div><span class="hljs-keyword">FROM</span> node:<span class="hljs-number">14.7</span>.<span class="hljs-number">0</span>
+
+<span class="hljs-comment"># (1) プロキシ設定</span>
+<span class="hljs-keyword">ENV</span> http_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>
+<span class="hljs-keyword">ENV</span> https_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>
+<span class="hljs-keyword">ENV</span> no_proxy <span class="hljs-string">'127.0.0.1,localhost'</span>
+
+<span class="hljs-comment"># (2) パッケージアップデート</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> apt-get update</span>
+
+<span class="hljs-comment"># (3) NUXTソースファイルコピー</span>
+<span class="hljs-keyword">WORKDIR</span><span class="bash"> /webapp</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> webapp /webapp</span>
+
+<span class="hljs-comment"># (4) ライブラリを取得しビルド</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> npm install</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> npm run build</span>
+
+<span class="hljs-keyword">ENV</span> HOST <span class="hljs-number">0.0</span>.<span class="hljs-number">0.0</span>
+
+<span class="hljs-keyword">CMD</span><span class="bash"> [<span class="hljs-string">"npm"</span>, <span class="hljs-string">"run"</span>, <span class="hljs-string">"start"</span>]</span>
+
+<span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">3000</span>
+</div></code></pre>
+<h2 id="イメージのビルド-2">イメージのビルド</h2>
+<p><code>sample/web:latest</code>というタグ名でイメージをビルドします。</p>
+<pre><code class="language-cmd"><div>&gt; docker image build -t sample/web:latest .
+Step <span class="hljs-number">1</span>/<span class="hljs-number">13</span> : FROM node:<span class="hljs-number">14</span>.<span class="hljs-number">7</span>.<span class="hljs-number">0</span>
+Step <span class="hljs-number">2</span>/<span class="hljs-number">13</span> : ENV http_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+Step <span class="hljs-number">3</span>/<span class="hljs-number">13</span> : ENV https_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+Step <span class="hljs-number">4</span>/<span class="hljs-number">13</span> : ENV no_proxy '<span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>,localhost'
+Step <span class="hljs-number">5</span>/<span class="hljs-number">13</span> : RUN apt-get update
+Step <span class="hljs-number">6</span>/<span class="hljs-number">13</span> : WORKDIR /webapp
+Step <span class="hljs-number">7</span>/<span class="hljs-number">13</span> : <span class="hljs-built_in">COPY</span> webapp /webapp
+Step <span class="hljs-number">8</span>/<span class="hljs-number">13</span> : RUN npm install
+Step <span class="hljs-number">9</span>/<span class="hljs-number">13</span> : RUN npm audit fix
+Step <span class="hljs-number">10</span>/<span class="hljs-number">13</span> : RUN npm run build
+Step <span class="hljs-number">11</span>/<span class="hljs-number">13</span> : ENV HOST <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>
+Step <span class="hljs-number">12</span>/<span class="hljs-number">13</span> : <span class="hljs-built_in">CMD</span> ["npm", "run", "<span class="hljs-built_in">start</span>"]
+Step <span class="hljs-number">13</span>/<span class="hljs-number">13</span> : EXPOSE <span class="hljs-number">3000</span>
+Successfully tagged sample/web:latest
+</div></code></pre>
+<h2 id="コンテナの起動-2">コンテナの起動</h2>
+<pre><code class="language-cmd"><div>&gt; docker run -d --rm --name web-app -p <span class="hljs-number">3000</span>:<span class="hljs-number">3000</span> sample/web:latest
+</div></code></pre>
+<h2 id="動作確認-1">動作確認</h2>
+<p><code>http://localhost:3000/</code>にアクセスしてWEBアプリが起動していることを確認します。</p>
+<h2 id="コンテナの終了">コンテナの終了</h2>
+<p>一旦起動してあるコンテナをすべて終了します。<br/>
+GUIまたはコマンドにて終了します。</p>
+<pre><code class="language-cmd"><div>&gt; docker-container ls
+CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                               NAMES
+<span class="hljs-number">24</span>c09caae768        sample/web:latest     "docker-entrypoint.s…"   <span class="hljs-number">5</span> minutes ago       Up <span class="hljs-number">5</span> minutes        <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">3000</span>-&gt;<span class="hljs-number">3000</span>/tcp              web-app
+<span class="hljs-number">8</span>be7dfcdf81c        sample/api:latest     "/bin/sh -c 'exec ja…"   About an hour ago   Up About an hour    <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">2000</span>-&gt;<span class="hljs-number">2000</span>/tcp              rest-api
+<span class="hljs-number">1</span>d7f651c0ffd        sample/mysql:latest   "docker-entrypoint.s…"   <span class="hljs-number">2</span> hours ago         Up <span class="hljs-number">2</span> hours          <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">3306</span>-&gt;<span class="hljs-number">3306</span>/tcp, <span class="hljs-number">33060</span>/tcp   my-sql
+
+&gt; docker stop web-app rest-api my-sql
+</div></code></pre>
+<hr>
+<h1 id="マルチコンテナの実行2回目">マルチコンテナの実行(2回目)</h1>
+<p>ここまでは各コンテナを個別に起動していたため、コンテナ間の通信が出来ていませんでした。</p>
+<p><code>Docker-compose</code> で必要なコンテナをまとめて起動することで、各コンテナを一つのネットワーク上に配備しお互いを連携させながら動かすことが出来るようになります。</p>
+<p>各コンテナのポートや環境変数、連携方法を設定するのが<code>docker-compose.yml</code>ファイルになります。</p>
+<h2 id="docker-composeyml内容確認">docker-compose.yml内容確認</h2>
+<p>ワークフォルダのルートに移動します。</p>
+<p><code>docker-compose.yml</code></p>
+<pre><code class="language-yml"><div><span class="hljs-attr">version:</span> <span class="hljs-string">"3"</span>
+<span class="hljs-attr">services:</span>
+<span class="hljs-attr">    db:</span>
+<span class="hljs-attr">        build:</span>
+<span class="hljs-attr">            context:</span> <span class="hljs-string">./db/</span>                  <span class="hljs-comment"># buildする場合のフォルダ</span>
+<span class="hljs-attr">            dockerfile:</span> <span class="hljs-string">Dockerfile</span>          <span class="hljs-comment"># build用Dockerfile名</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-string">sample/mysql:latest</span>          <span class="hljs-comment"># 起動するコンテナイメージ名</span>
+<span class="hljs-attr">        volumes:</span>                            <span class="hljs-comment"># ホストOSディスク共有設定</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">'./mysql:/var/lib/mysql'</span>      <span class="hljs-comment"># ホストOSフォルダ:コンテナ内ディレクトリ</span>
+<span class="hljs-attr">        environment:</span>                        <span class="hljs-comment"># 環境変数の設定</span>
+<span class="hljs-attr">            MYSQL_ROOT_PASSWORD:</span> <span class="hljs-string">mysql</span>
+<span class="hljs-attr">            MYSQL_DATABASE:</span> <span class="hljs-string">sampledb</span>
+<span class="hljs-attr">            MYSQL_USER:</span> <span class="hljs-string">sample</span>
+<span class="hljs-attr">            MYSQL_PASSWORD:</span> <span class="hljs-string">sample</span>
+<span class="hljs-attr">        ports:</span>                              <span class="hljs-comment"># ポート設定</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"${PORT_DB}:3306"</span>             <span class="hljs-comment"># 外部公開ポート番号:内部通信用ポート番号</span>
+                                            <span class="hljs-comment"># 外部公開ポート番号は実行時に設定できるよう環境変数化している</span>
+    
+<span class="hljs-attr">    api:</span>
+<span class="hljs-attr">        build:</span>
+<span class="hljs-attr">            context:</span> <span class="hljs-string">./api/</span>
+<span class="hljs-attr">            dockerfile:</span> <span class="hljs-string">Dockerfile</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-string">sample/api:latest</span>
+<span class="hljs-attr">        depends_on:</span>                         <span class="hljs-comment"># 依存するサービスを設定</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">db</span>
+<span class="hljs-attr">        environment:</span>                        <span class="hljs-comment"># RESTAPI環境変数をオーバーライドする</span>
+<span class="hljs-attr">            SPRING_DATASOURCE_URL:</span> <span class="hljs-string">'jdbc:mysql://db:3306/sampledb?useJDBCCompliantTimezoneShift=true&amp;useLegacyDatetimeCode=false&amp;serverTimezone=JST&amp;useUnicode=true&amp;characterEncoding=utf-8'</span>
+<span class="hljs-attr">            SPRING_DATASOURCE_USERNAME:</span> <span class="hljs-string">sample</span>
+<span class="hljs-attr">            SPRING_DATASOURCE_PASSWORD:</span> <span class="hljs-string">sample</span>
+<span class="hljs-attr">            SPRING_DATASOURCE_HIKARI_CONNECTIONTIMEOUT:</span> <span class="hljs-number">30000</span>
+<span class="hljs-attr">            SPRING_DATASOURCE_HIKARI_IDLETIMEOUT:</span> <span class="hljs-number">600000</span>
+<span class="hljs-attr">            SERVER_PORT:</span> <span class="hljs-number">2000</span>               <span class="hljs-comment"># 内部通信用のポート番号を設定する</span>
+<span class="hljs-attr">        ports:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"${PORT_API}:2000"</span>            <span class="hljs-comment"># 外部公開ポート:内部通信用ポート→SERVER_PORTを設定</span>
+    
+<span class="hljs-attr">    web:</span>
+<span class="hljs-attr">        build:</span>
+<span class="hljs-attr">            context:</span> <span class="hljs-string">./web/</span>
+<span class="hljs-attr">            dockerfile:</span> <span class="hljs-string">Dockerfile</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-string">sample/web:latest</span>
+<span class="hljs-attr">        depends_on:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">        environment:</span> 
+<span class="hljs-attr">            API_URL:</span> <span class="hljs-string">"${REST_SRV}:${PORT_API}"</span>  <span class="hljs-comment"># RESRAPIサーバーのIPアドレス:外部公開ポート</span>
+<span class="hljs-attr">        ports:</span>  
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"${PORT_WEB}:3000"</span>            <span class="hljs-comment"># WEBサーバーは内部通信用ポート3000をListenしているため</span>
+</div></code></pre>
+<p><code>.env</code></p>
+<pre><code class="language-sh"><div><span class="hljs-comment"># WEBAPP PORT</span>
+PORT_WEB=13000
+
+<span class="hljs-comment"># RESTAPI SERVER AND PORT</span>
+REST_SRV=http://localhost
+PORT_API=12000
+
+<span class="hljs-comment"># DB ACCESS PORT</span>
+PORT_DB=13306
+</div></code></pre>
+<h2 id="マルチコンテナ起動">マルチコンテナ起動</h2>
+<p><code>docker-compose</code>でDBサーバー、RESTAPI、WEBアプリ3つのサービスを同時に起動します。</p>
+<pre><code class="language-cmd"><div>&gt; docker-compose up -d
+Creating network "<span class="hljs-number">30</span>_docker_default" with the default driver
+Creating <span class="hljs-number">30</span>_docker_db_1 ... done
+Creating <span class="hljs-number">30</span>_docker_api_1 ... done
+Creating <span class="hljs-number">30</span>_docker_web_1 ... done
+</div></code></pre>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-05.png" alt=""></p>
+<pre><code class="language-cmd"><div>&gt; docker container ls
+CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                                NAMES
+<span class="hljs-number">53</span>eb26fb0e99        sample/web:latest     "docker-entrypoint.s…"   <span class="hljs-number">5</span> minutes ago       Up <span class="hljs-number">5</span> minutes        <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">13000</span>-&gt;<span class="hljs-number">3000</span>/tcp              <span class="hljs-number">30</span>_docker_web_1
+d75681060ae4        sample/api:latest     "/bin/sh -c 'exec ja…"   <span class="hljs-number">5</span> minutes ago       Up <span class="hljs-number">5</span> minutes        <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">12000</span>-&gt;<span class="hljs-number">2000</span>/tcp              <span class="hljs-number">30</span>_docker_api_1
+<span class="hljs-number">8</span>c76f3896dab        sample/mysql:latest   "docker-entrypoint.s…"   <span class="hljs-number">6</span> minutes ago       Up <span class="hljs-number">5</span> minutes        <span class="hljs-number">33060</span>/tcp, <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">13306</span>-&gt;<span class="hljs-number">3306</span>/tcp   <span class="hljs-number">30</span>_docker_db_1
+</div></code></pre>
+<h2 id="db初期設定">DB初期設定</h2>
+<p>dbサービス(30_docker_db_1)のデータベースが立ち上がっていることをLOGで確認した後、DBの初期設定を行う。</p>
+<pre><code class="language-cmd"><div>&gt; docker exec -it <span class="hljs-number">30</span>_docker_db_1 /usr/local/bin/prepare.sh
+&gt; docker exec -it <span class="hljs-number">30</span>_docker_db_1 /usr/local/bin/init-data.sh
+&gt; docker exec -it <span class="hljs-number">30</span>_docker_db_1 mysql -u sample -psample sampledb -e "select id, <span class="hljs-built_in">title</span> from items;"
++----+-----------------------------------------------------------+
+| id | <span class="hljs-built_in">title</span>                                                     |
++----+-----------------------------------------------------------+
+|  <span class="hljs-number">1</span> | WEB Application作成                                       |
+|  <span class="hljs-number">2</span> | RESTful API作成                                           |
+|  <span class="hljs-number">3</span> | フロントエンドとバックエンドを結合                        |
+|  <span class="hljs-number">4</span> | MySQLのDockerイメージを作成する                           |
+|  <span class="hljs-number">5</span> | バックエンドのDockerイメージを作成する                    |
+|  <span class="hljs-number">6</span> | フロントエンドのDockerイメージを作成する                  |
+|  <span class="hljs-number">7</span> | Docker-composeでパッケージ化する                          |
++----+-----------------------------------------------------------+
+</div></code></pre>
+<h2 id="各コンテナの動作確認">各コンテナの動作確認</h2>
+<h3 id="dbコンテナ動作確認">DBコンテナ動作確認</h3>
+<pre><code class="language-cmd"><div>&gt; C:\"Program Files"\"MariaDB <span class="hljs-number">10</span>.<span class="hljs-number">4</span>"\bin\mysql.exe -u sample -psample -P13306 sampledb -e "select id,<span class="hljs-built_in">title</span> from items;"
++----+-----------------------------------------------------------+
+| id | <span class="hljs-built_in">title</span>                                                     |
++----+-----------------------------------------------------------+
+|  <span class="hljs-number">1</span> | WEB Application作成                                       |
+|  <span class="hljs-number">2</span> | RESTful API作成                                           |
+|  <span class="hljs-number">3</span> | フロントエンドとバックエンドを結合                        |
+|  <span class="hljs-number">4</span> | MySQLのDockerイメージを作成する                           |
+|  <span class="hljs-number">5</span> | バックエンドのDockerイメージを作成する                    |
+|  <span class="hljs-number">6</span> | フロントエンドのDockerイメージを作成する                  |
+|  <span class="hljs-number">7</span> | Docker-composeでパッケージ化する                          |
++----+-----------------------------------------------------------+
+</div></code></pre>
+<h3 id="restapiコンテナ動作確認">RESTAPIコンテナ動作確認</h3>
+<pre><code class="language-cmd"><div>curl 'http://localhost:<span class="hljs-number">12000</span>/api/items/<span class="hljs-number">1</span>'
+
+StatusCode        : <span class="hljs-number">200</span>
+StatusDescription :
+Content           : {"id":<span class="hljs-number">1</span>,"<span class="hljs-built_in">title</span>":"WEB Applicationä½æ§ãã­ã³ãã¨ã³ãã®WEBã¢ããªãä½æã","status":"DONE"}
+    :
+</div></code></pre>
+<p>RESTAPIが動作していることと、API-&gt;DBへの通信が出来ていることが確認できます。</p>
+<h3 id="webアプリ動作確認">WEBアプリ動作確認</h3>
+<p><code>http://localhost:13000/items/</code>にWEBブラウザでアクセスします。</p>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-06.png" alt=""></p>
+<p>一覧表示されましたでしょうか？</p>
+<p>データを追加して、一度全コンテナを落とします。</p>
+<p>その後再度起動して、追加したデータが消えていない(永続化された)ことを確認します。</p>
+<pre><code class="language-cmd"><div>&gt; docker-compose down
+Stopping <span class="hljs-number">30</span>_docker_web_1 ... done
+Stopping <span class="hljs-number">30</span>_docker_api_1 ... done
+Stopping <span class="hljs-number">30</span>_docker_db_1  ... done
+Removing <span class="hljs-number">30</span>_docker_web_1 ... done
+Removing <span class="hljs-number">30</span>_docker_api_1 ... done
+Removing <span class="hljs-number">30</span>_docker_db_1  ... done
+Removing network <span class="hljs-number">30</span>_docker_default
+</div></code></pre>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-07.png" alt=""></p>
+<p>完全にダウンしコンテナが削除されていることを確認する</p>
+<pre><code class="language-cmd"><div>&gt; docker-compose up -d
+Creating network "<span class="hljs-number">30</span>_docker_default" with the default driver
+Creating <span class="hljs-number">30</span>_docker_db_1 ... done
+Creating <span class="hljs-number">30</span>_docker_api_1 ... done
+Creating <span class="hljs-number">30</span>_docker_web_1 ... done
+</div></code></pre>
+<p>再度<code>http://localhost:13000/items/</code>にWEBブラウザでアクセスします。</p>
+<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-08.png" alt=""></p>
+<p>新たに登録した内容が消えずに表示されることを確認する</p>
+<h2 id="マルチコンテナのビルド2回目">マルチコンテナのビルド(2回目)</h2>
+<p>docker-composeではイメージのビルドも行うことができます。</p>
+<h3 id="一旦コンテナを止めて削除します">一旦コンテナを止めて削除します</h3>
+<pre><code class="language-cmd"><div>docker-compose down
+</div></code></pre>
+<h3 id="コンテナイメージをビルドします">コンテナイメージをビルドします</h3>
+<pre><code class="language-cmd"><div>Building db
+Step <span class="hljs-number">1</span>/<span class="hljs-number">11</span> : FROM mysql:<span class="hljs-number">5</span>.<span class="hljs-number">7</span>
+ ---&gt; <span class="hljs-number">718</span>a6da099d8
+Step <span class="hljs-number">2</span>/<span class="hljs-number">11</span> : ENV http_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Using cache
+ ---&gt; <span class="hljs-number">7</span>f483d82b48e
+Step <span class="hljs-number">3</span>/<span class="hljs-number">11</span> : ENV https_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Using cache
+ ---&gt; e2b115eb5a6a
+Step <span class="hljs-number">4</span>/<span class="hljs-number">11</span> : ENV no_proxy '<span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>,localhost'
+ ---&gt; Using cache
+ ---&gt; <span class="hljs-number">77333</span>bd9a791
+Step <span class="hljs-number">5</span>/<span class="hljs-number">11</span> : RUN apt-get update
+ ---&gt; Using cache
+ ---&gt; <span class="hljs-number">41399</span>aeaf9a9
+Step <span class="hljs-number">6</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/
+ ---&gt; <span class="hljs-number">43263</span>a9c7337
+Step <span class="hljs-number">7</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> etc/mysql/conf.d/mysql.cnf /etc/mysql/conf.d/
+ ---&gt; ab5f7944cc13
+Step <span class="hljs-number">8</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> prepare.sh /usr/local/bin/
+ ---&gt; <span class="hljs-number">9</span>c7809a3ec6b
+Step <span class="hljs-number">9</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> init-data.sh /usr/local/bin/
+ ---&gt; <span class="hljs-number">52</span>fd8521b6d4
+Step <span class="hljs-number">10</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">COPY</span> sql /sql
+ ---&gt; <span class="hljs-number">3</span>c134c4f6b50
+Step <span class="hljs-number">11</span>/<span class="hljs-number">11</span> : <span class="hljs-built_in">CMD</span> ["mysqld"]
+ ---&gt; Running <span class="hljs-keyword">in</span> c32b274a3bbe
+Removing intermediate container c32b274a3bbe
+ ---&gt; <span class="hljs-number">0238</span>fb63b085
+Successfully built <span class="hljs-number">0238</span>fb63b085
+Successfully tagged sample/mysql:latest
+Building api
+Step <span class="hljs-number">1</span>/<span class="hljs-number">4</span> : FROM openjdk:<span class="hljs-number">8</span>-jdk-alpine
+ ---&gt; a3562aa0b991
+Step <span class="hljs-number">2</span>/<span class="hljs-number">4</span> : ADD libs/webapi-<span class="hljs-number">1</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.jar app.jar
+ ---&gt; <span class="hljs-number">5</span>cf6f9f8d951
+Step <span class="hljs-number">3</span>/<span class="hljs-number">4</span> : ENV JAVA_OPS="-Xms64m -Xmx512m"
+ ---&gt; Running <span class="hljs-keyword">in</span> <span class="hljs-number">5</span>dda1fc2decc
+Removing intermediate container <span class="hljs-number">5</span>dda1fc2decc
+ ---&gt; <span class="hljs-number">4</span>a3f393ed5f5
+Step <span class="hljs-number">4</span>/<span class="hljs-number">4</span> : ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app.jar
+ ---&gt; Running <span class="hljs-keyword">in</span> <span class="hljs-number">206</span>db1fbb722
+Removing intermediate container <span class="hljs-number">206</span>db1fbb722
+ ---&gt; <span class="hljs-number">43</span>c650d899c6
+Successfully built <span class="hljs-number">43</span>c650d899c6
+Successfully tagged sample/api:latest
+Building web
+Step <span class="hljs-number">1</span>/<span class="hljs-number">12</span> : FROM node:<span class="hljs-number">14</span>.<span class="hljs-number">7</span>.<span class="hljs-number">0</span>
+ ---&gt; <span class="hljs-number">002</span>df0b34ccb
+Step <span class="hljs-number">2</span>/<span class="hljs-number">12</span> : ENV http_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Using cache
+ ---&gt; <span class="hljs-number">9384</span>d3914dde
+Step <span class="hljs-number">3</span>/<span class="hljs-number">12</span> : ENV https_proxy 'http://gwproxy.daikin.co.jp:<span class="hljs-number">3128</span>'
+ ---&gt; Using cache
+ ---&gt; b33029619e39
+Step <span class="hljs-number">4</span>/<span class="hljs-number">12</span> : ENV no_proxy '<span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>,localhost'
+ ---&gt; Using cache
+ ---&gt; <span class="hljs-number">88</span>f217ec2da4
+Step <span class="hljs-number">5</span>/<span class="hljs-number">12</span> : RUN apt-get update
+ ---&gt; Using cache
+ ---&gt; f58268166706
+Step <span class="hljs-number">6</span>/<span class="hljs-number">12</span> : WORKDIR /webapp
+ ---&gt; Using cache
+ ---&gt; f323e5998007
+Step <span class="hljs-number">7</span>/<span class="hljs-number">12</span> : <span class="hljs-built_in">COPY</span> webapp /webapp
+ ---&gt; abea78514722
+Step <span class="hljs-number">8</span>/<span class="hljs-number">12</span> : RUN npm install
+ ---&gt; Running <span class="hljs-keyword">in</span> b65443032e41
+
+&gt; core-js@<span class="hljs-number">2</span>.<span class="hljs-number">6</span>.<span class="hljs-number">11</span> postinstall /webapp/node_modules/core-js
+&gt; node -e "try{require('./postinstall')}catch(e){}"
+
+Thank you <span class="hljs-keyword">for</span> using core-js ( https://github.com/zloirock/core-js ) <span class="hljs-keyword">for</span> polyfilling JavaScript standard library!
+
+The project needs your <span class="hljs-built_in">help</span>! Please consider supporting of core-js on Open Collective or Patreon: 
+&gt; https://opencollective.com/core-js 
+&gt; https://www.patreon.com/zloirock 
+
+Also, the author of core-js ( https://github.com/zloirock ) is looking <span class="hljs-keyword">for</span> a good job -)
+
+
+&gt; ejs@<span class="hljs-number">2</span>.<span class="hljs-number">7</span>.<span class="hljs-number">4</span> postinstall /webapp/node_modules/ejs
+&gt; node ./postinstall.js
+
+Thank you <span class="hljs-keyword">for</span> installing EJS: built with the Jake JavaScript build tool (https://jakejs.com/)
+
+
+&gt; nuxt@<span class="hljs-number">2</span>.<span class="hljs-number">14</span>.<span class="hljs-number">1</span> postinstall /webapp/node_modules/nuxt
+&gt; opencollective || <span class="hljs-keyword">exit</span> <span class="hljs-number">0</span>
+
+                          Thanks <span class="hljs-keyword">for</span> installing nuxtjs
+                 Please consider donating to our open collective
+                        to <span class="hljs-built_in">help</span> us maintain this package.
+<span class="hljs-function">
+
+                 Donate: <span class="hljs-title">https</span>://<span class="hljs-title">opencollective.com</span>/<span class="hljs-title">nuxtjs</span>/<span class="hljs-title">donate</span>
+
+<span class="hljs-title">npm</span> <span class="hljs-title">WARN</span> <span class="hljs-title">optional</span> <span class="hljs-title">SKIPPING</span> <span class="hljs-title">OPTIONAL</span> <span class="hljs-title">DEPENDENCY</span>: <span class="hljs-title">fsevents</span>@1.2.13 (<span class="hljs-title">node_modules</span>/<span class="hljs-title">watchpack</span>-<span class="hljs-title">chokidar2</span>/<span class="hljs-title">node_modules</span>/<span class="hljs-title">fsevents</span>):
+<span class="hljs-title">npm</span> <span class="hljs-title">WARN</span> <span class="hljs-title">notsup</span> <span class="hljs-title">SKIPPING</span> <span class="hljs-title">OPTIONAL</span> <span class="hljs-title">DEPENDENCY</span>: <span class="hljs-title">Unsupported</span> <span class="hljs-title">platform</span> <span class="hljs-title">for</span> <span class="hljs-title">fsevents</span>@1.2.13: <span class="hljs-title">wanted</span> {"<span class="hljs-title">os</span>":"<span class="hljs-title">darwin</span>","<span class="hljs-title">arch</span>":"<span class="hljs-title">any</span>"} (<span class="hljs-title">current</span>: {"<span class="hljs-title">os</span>":"<span class="hljs-title">linux</span>","<span class="hljs-title">arch</span>":"<span class="hljs-title">x64</span>"})
+<span class="hljs-title">npm</span> <span class="hljs-title">WARN</span> <span class="hljs-title">optional</span> <span class="hljs-title">SKIPPING</span> <span class="hljs-title">OPTIONAL</span> <span class="hljs-title">DEPENDENCY</span>: <span class="hljs-title">fsevents</span>@2.1.3 (<span class="hljs-title">node_modules</span>/<span class="hljs-title">fsevents</span>):
+<span class="hljs-title">npm</span> <span class="hljs-title">WARN</span> <span class="hljs-title">notsup</span> <span class="hljs-title">SKIPPING</span> <span class="hljs-title">OPTIONAL</span> <span class="hljs-title">DEPENDENCY</span>: <span class="hljs-title">Unsupported</span> <span class="hljs-title">platform</span> <span class="hljs-title">for</span> <span class="hljs-title">fsevents</span>@2.1.3: <span class="hljs-title">wanted</span> {"<span class="hljs-title">os</span>":"<span class="hljs-title">darwin</span>","<span class="hljs-title">arch</span>":"<span class="hljs-title">any</span>"} (<span class="hljs-title">current</span>: {"<span class="hljs-title">os</span>":"<span class="hljs-title">linux</span>","<span class="hljs-title">arch</span>":"<span class="hljs-title">x64</span>"})
+
+<span class="hljs-title">added</span> 1406 <span class="hljs-title">packages</span> <span class="hljs-title">from</span> 665 <span class="hljs-title">contributors</span> <span class="hljs-title">and</span> <span class="hljs-title">audited</span> 1409 <span class="hljs-title">packages</span> <span class="hljs-title">in</span> 71.381<span class="hljs-title">s</span>
+
+62 <span class="hljs-title">packages</span> <span class="hljs-title">are</span> <span class="hljs-title">looking</span> <span class="hljs-title">for</span> <span class="hljs-title">funding</span>
+  <span class="hljs-title">run</span> `<span class="hljs-title">npm</span> <span class="hljs-title">fund</span>` <span class="hljs-title">for</span> <span class="hljs-title">details</span>
+
+<span class="hljs-title">found</span> 2 <span class="hljs-title">high</span> <span class="hljs-title">severity</span> <span class="hljs-title">vulnerabilities</span>
+  <span class="hljs-title">run</span> `<span class="hljs-title">npm</span> <span class="hljs-title">audit</span> <span class="hljs-title">fix</span>` <span class="hljs-title">to</span> <span class="hljs-title">fix</span> <span class="hljs-title">them</span>, <span class="hljs-title">or</span> `<span class="hljs-title">npm</span> <span class="hljs-title">audit</span>` <span class="hljs-title">for</span> <span class="hljs-title">details</span>
+<span class="hljs-title">Removing</span> <span class="hljs-title">intermediate</span> <span class="hljs-title">container</span> <span class="hljs-title">b65443032e41</span>
+ ---&gt; <span class="hljs-title">e144c13d5afd</span>
+<span class="hljs-title">Step</span> 9/12 : <span class="hljs-title">RUN</span> <span class="hljs-title">npm</span> <span class="hljs-title">run</span> <span class="hljs-title">build</span>
+ ---&gt; <span class="hljs-title">Running</span> <span class="hljs-title">in</span> 1<span class="hljs-title">fb256b1900f</span>
+
+&gt; <span class="hljs-title">webapp</span>@1.0.0 <span class="hljs-title">build</span> /<span class="hljs-title">webapp</span>
+&gt; <span class="hljs-title">nuxt</span> <span class="hljs-title">build</span>
+
+ℹ <span class="hljs-title">Production</span> <span class="hljs-title">build</span>
+ℹ <span class="hljs-title">Bundling</span> <span class="hljs-title">for</span> <span class="hljs-title">server</span> <span class="hljs-title">and</span> <span class="hljs-title">client</span> <span class="hljs-title">side</span>
+ℹ <span class="hljs-title">Target</span>: <span class="hljs-title">server</span>
+✔ <span class="hljs-title">Builder</span> <span class="hljs-title">initialized</span>
+✔ <span class="hljs-title">Nuxt</span> <span class="hljs-title">files</span> <span class="hljs-title">generated</span>
+ℹ <span class="hljs-title">Compiling</span> <span class="hljs-title">Client</span>
+✔ <span class="hljs-title">Client</span>: <span class="hljs-title">Compiled</span> <span class="hljs-title">successfully</span> <span class="hljs-title">in</span> 17.70<span class="hljs-title">s</span>
+ℹ <span class="hljs-title">Compiling</span> <span class="hljs-title">Server</span>
+✔ <span class="hljs-title">Server</span>: <span class="hljs-title">Compiled</span> <span class="hljs-title">successfully</span> <span class="hljs-title">in</span> 4.76<span class="hljs-title">s</span>
+
+<span class="hljs-title">Hash</span>: 64<span class="hljs-title">e21ee209f7b1eb4317</span>
+<span class="hljs-title">Version</span>: <span class="hljs-title">webpack</span> 4.44.1
+<span class="hljs-title">Time</span>: 17704<span class="hljs-title">ms</span>
+<span class="hljs-title">Built</span> <span class="hljs-title">at</span>: 08/23/2020 3:35:52 <span class="hljs-title">PM</span>
+                           <span class="hljs-title">Asset</span>       <span class="hljs-title">Size</span>  <span class="hljs-title">Chunks</span>                                <span class="hljs-title">Chunk</span> <span class="hljs-title">Names</span>
+  ../<span class="hljs-title">server</span>/<span class="hljs-title">client.manifest.json</span>   15.7 <span class="hljs-title">KiB</span>          [<span class="hljs-title">emitted</span>]
+                        <span class="hljs-title">LICENSES</span>  878 <span class="hljs-title">bytes</span>          [<span class="hljs-title">emitted</span>]
+                  <span class="hljs-title">app</span>.487<span class="hljs-title">e53f.js</span>    937 <span class="hljs-title">KiB</span>       1  [<span class="hljs-title">emitted</span>] [<span class="hljs-title">immutable</span>]  [<span class="hljs-title">big</span>]  <span class="hljs-title">app</span>
+<span class="hljs-title">fonts</span>/<span class="hljs-title">element</span>-<span class="hljs-title">icons</span>.535877<span class="hljs-title">f.woff</span>   27.5 <span class="hljs-title">KiB</span>          [<span class="hljs-title">emitted</span>]
+ <span class="hljs-title">fonts</span>/<span class="hljs-title">element</span>-<span class="hljs-title">icons</span>.732389<span class="hljs-title">d.ttf</span>   54.6 <span class="hljs-title">KiB</span>          [<span class="hljs-title">emitted</span>]
+ <span class="hljs-title">node_modules</span>/<span class="hljs-title">commons</span>.5<span class="hljs-title">d8715c.js</span>    185 <span class="hljs-title">KiB</span>       0  [<span class="hljs-title">emitted</span>] [<span class="hljs-title">immutable</span>]         <span class="hljs-title">node_modules</span>/<span class="hljs-title">commons</span>
+          <span class="hljs-title">pages</span>/<span class="hljs-title">index</span>.938450<span class="hljs-title">a.js</span>   3.28 <span class="hljs-title">KiB</span>       2  [<span class="hljs-title">emitted</span>] [<span class="hljs-title">immutable</span>]         <span class="hljs-title">pages</span>/<span class="hljs-title">index</span>
+          <span class="hljs-title">pages</span>/<span class="hljs-title">items</span>.8<span class="hljs-title">f4a93f.js</span>   8.34 <span class="hljs-title">KiB</span>       3  [<span class="hljs-title">emitted</span>] [<span class="hljs-title">immutable</span>]         <span class="hljs-title">pages</span>/<span class="hljs-title">items</span>
+              <span class="hljs-title">runtime.aac98c6.js</span>   2.35 <span class="hljs-title">KiB</span>       4  [<span class="hljs-title">emitted</span>] [<span class="hljs-title">immutable</span>]         <span class="hljs-title">runtime</span>
+ + 2 <span class="hljs-title">hidden</span> <span class="hljs-title">assets</span>
+<span class="hljs-title">Entrypoint</span> <span class="hljs-title">app</span> [<span class="hljs-title">big</span>] = <span class="hljs-title">runtime.aac98c6.js</span> <span class="hljs-title">node_modules</span>/<span class="hljs-title">commons</span>.5<span class="hljs-title">d8715c.js</span> <span class="hljs-title">app</span>.487<span class="hljs-title">e53f.js</span>
+
+<span class="hljs-title">WARNING</span> <span class="hljs-title">in</span> <span class="hljs-title">asset</span> <span class="hljs-title">size</span> <span class="hljs-title">limit</span>: <span class="hljs-title">The</span> <span class="hljs-title">following</span> <span class="hljs-title">asset</span>(<span class="hljs-title">s</span>) <span class="hljs-title">exceed</span> <span class="hljs-title">the</span> <span class="hljs-title">recommended</span> <span class="hljs-title">size</span> <span class="hljs-title">limit</span> (244 <span class="hljs-title">KiB</span>).
+<span class="hljs-title">This</span> <span class="hljs-title">can</span> <span class="hljs-title">impact</span> <span class="hljs-title">web</span> <span class="hljs-title">performance</span>.
+<span class="hljs-title">Assets</span>: 
+  <span class="hljs-title">app</span>.487<span class="hljs-title">e53f.js</span> (937 <span class="hljs-title">KiB</span>)
+
+<span class="hljs-title">WARNING</span> <span class="hljs-title">in</span> <span class="hljs-title">entrypoint</span> <span class="hljs-title">size</span> <span class="hljs-title">limit</span>: <span class="hljs-title">The</span> <span class="hljs-title">following</span> <span class="hljs-title">entrypoint</span>(<span class="hljs-title">s</span>) <span class="hljs-title">combined</span> <span class="hljs-title">asset</span> <span class="hljs-title">size</span> <span class="hljs-title">exceeds</span> <span class="hljs-title">the</span> <span class="hljs-title">recommended</span> <span class="hljs-title">limit</span> (1000 <span class="hljs-title">KiB</span>). <span class="hljs-title">This</span> <span class="hljs-title">can</span> <span class="hljs-title">impact</span> <span class="hljs-title">web</span> <span class="hljs-title">performance</span>.
+<span class="hljs-title">Entrypoints</span>:
+  <span class="hljs-title">app</span> (1.1 <span class="hljs-title">MiB</span>)
+      <span class="hljs-title">runtime.aac98c6.js</span>
+      <span class="hljs-title">node_modules</span>/<span class="hljs-title">commons</span>.5<span class="hljs-title">d8715c.js</span>
+      <span class="hljs-title">app</span>.487<span class="hljs-title">e53f.js</span>
+
+
+<span class="hljs-title">Hash</span>: 19<span class="hljs-title">c51ae24c14a70b2d5a</span>
+<span class="hljs-title">Version</span>: <span class="hljs-title">webpack</span> 4.44.1
+<span class="hljs-title">Time</span>: 4769<span class="hljs-title">ms</span>
+<span class="hljs-title">Built</span> <span class="hljs-title">at</span>: 08/23/2020 3:36:00 <span class="hljs-title">PM</span>
+               <span class="hljs-title">Asset</span>       <span class="hljs-title">Size</span>  <span class="hljs-title">Chunks</span>             <span class="hljs-title">Chunk</span> <span class="hljs-title">Names</span>
+      <span class="hljs-title">pages</span>/<span class="hljs-title">index.js</span>   11.5 <span class="hljs-title">KiB</span>       1  [<span class="hljs-title">emitted</span>]  <span class="hljs-title">pages</span>/<span class="hljs-title">index</span>
+      <span class="hljs-title">pages</span>/<span class="hljs-title">items.js</span>   10.4 <span class="hljs-title">KiB</span>       2  [<span class="hljs-title">emitted</span>]  <span class="hljs-title">pages</span>/<span class="hljs-title">items</span>
+           <span class="hljs-title">server.js</span>   1.81 <span class="hljs-title">MiB</span>       0  [<span class="hljs-title">emitted</span>]  <span class="hljs-title">app</span>
+<span class="hljs-title">server.manifest.json</span>  291 <span class="hljs-title">bytes</span>          [<span class="hljs-title">emitted</span>]
+ + 3 <span class="hljs-title">hidden</span> <span class="hljs-title">assets</span>
+<span class="hljs-title">Entrypoint</span> <span class="hljs-title">app</span> = <span class="hljs-title">server.js</span> <span class="hljs-title">server.js.map</span>
+ℹ <span class="hljs-title">Ready</span> <span class="hljs-title">to</span> <span class="hljs-title">run</span> <span class="hljs-title">nuxt</span> <span class="hljs-title">start</span>
+
+   ╭──────────────────────────────────────────────────────────────────────────────────────╮
+   │                                                                                      │
+   │   ⚠ <span class="hljs-title">Nuxt</span> <span class="hljs-title">Warning</span>                                                                     │
+   │                                                                                      │
+   │   <span class="hljs-title">The</span> <span class="hljs-title">command</span> '<span class="hljs-title">nuxt</span> <span class="hljs-title">build</span>' <span class="hljs-title">finished</span> <span class="hljs-title">but</span> <span class="hljs-title">did</span> <span class="hljs-title">not</span> <span class="hljs-title">exit</span> <span class="hljs-title">after</span> 5<span class="hljs-title">s</span>                        │
+   │   <span class="hljs-title">This</span> <span class="hljs-title">is</span> <span class="hljs-title">most</span> <span class="hljs-title">likely</span> <span class="hljs-title">not</span> <span class="hljs-title">caused</span> <span class="hljs-title">by</span> <span class="hljs-title">a</span> <span class="hljs-title">bug</span> <span class="hljs-title">in</span> <span class="hljs-title">Nuxt.js</span>                                 │
+   │   <span class="hljs-title">Make</span> <span class="hljs-title">sure</span> <span class="hljs-title">to</span> <span class="hljs-title">cleanup</span> <span class="hljs-title">all</span> <span class="hljs-title">timers</span> <span class="hljs-title">and</span> <span class="hljs-title">listeners</span> <span class="hljs-title">you</span> <span class="hljs-title">or</span> <span class="hljs-title">your</span> <span class="hljs-title">plugins</span>/<span class="hljs-title">modules</span> <span class="hljs-title">start</span>.   │
+   │   <span class="hljs-title">Nuxt.js</span> <span class="hljs-title">will</span> <span class="hljs-title">now</span> <span class="hljs-title">force</span> <span class="hljs-title">exit</span>                                                        │
+   │                                                                                      │
+   │   <span class="hljs-title">DeprecationWarning</span>: <span class="hljs-title">Starting</span> <span class="hljs-title">with</span> <span class="hljs-title">Nuxt</span> <span class="hljs-title">version</span> 3 <span class="hljs-title">this</span> <span class="hljs-title">will</span> <span class="hljs-title">be</span> <span class="hljs-title">a</span> <span class="hljs-title">fatal</span> <span class="hljs-title">error</span>        │
+   │                                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────────────────────╯
+
+<span class="hljs-title">Removing</span> <span class="hljs-title">intermediate</span> <span class="hljs-title">container</span> 1<span class="hljs-title">fb256b1900f</span>
+ ---&gt; <span class="hljs-title">f06d2958cb96</span>
+<span class="hljs-title">Step</span> 10/12 : <span class="hljs-title">ENV</span> <span class="hljs-title">HOST</span> 0.0.0.0
+ ---&gt; <span class="hljs-title">Running</span> <span class="hljs-title">in</span> 7<span class="hljs-title">f9bf7a801bd</span>
+<span class="hljs-title">Removing</span> <span class="hljs-title">intermediate</span> <span class="hljs-title">container</span> 7<span class="hljs-title">f9bf7a801bd</span>
+ ---&gt; <span class="hljs-title">e87de9551c6b</span>
+<span class="hljs-title">Step</span> 11/12 : <span class="hljs-title">CMD</span> ["<span class="hljs-title">npm</span>", "<span class="hljs-title">run</span>", "<span class="hljs-title">start</span>"]
+ ---&gt; <span class="hljs-title">Running</span> <span class="hljs-title">in</span> 041325<span class="hljs-title">f2fb40</span>
+<span class="hljs-title">Removing</span> <span class="hljs-title">intermediate</span> <span class="hljs-title">container</span> 041325<span class="hljs-title">f2fb40</span>
+ ---&gt; <span class="hljs-title">a4f2f7216ad3</span>
+<span class="hljs-title">Step</span> 12/12 : <span class="hljs-title">EXPOSE</span> 3000
+ ---&gt; <span class="hljs-title">Running</span> <span class="hljs-title">in</span> 7<span class="hljs-title">d5bd54c7eef</span>
+<span class="hljs-title">Removing</span> <span class="hljs-title">intermediate</span> <span class="hljs-title">container</span> 7<span class="hljs-title">d5bd54c7eef</span>
+ ---&gt; 513<span class="hljs-title">ce1bdeb1e</span>
+<span class="hljs-title">Successfully</span> <span class="hljs-title">built</span> 513<span class="hljs-title">ce1bdeb1e</span>
+<span class="hljs-title">Successfully</span> <span class="hljs-title">tagged</span> <span class="hljs-title">sample</span>/<span class="hljs-title">web:latest</span>
+</span></div></code></pre>
+
+    </body>
+    </html>
