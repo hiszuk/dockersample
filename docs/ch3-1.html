@@ -107,7 +107,7 @@
 <h2 id="dockerdesktopを起動します">DockerDesktopを起動します</h2>
 <p>DockerDesktopアプリを管理者モードで起動する</p>
 <p>DockerDesctopで、proxy設定などを確認する</p>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-01.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-01.png" alt=""></p>
 <h2 id="dockerコンテナを起動してみます">Dockerコンテナを起動してみます</h2>
 <p>下記コマンドを入力し、apacheのWEBサービスを起動してみます。</p>
 <pre><code class="language-cmd"><div>&gt; docker run -dit --name my-apache-app -p <span class="hljs-number">8181</span>:<span class="hljs-number">80</span> httpd:<span class="hljs-number">2</span>.<span class="hljs-number">4</span>
@@ -128,7 +128,7 @@ Unable to <span class="hljs-built_in">find</span> image 'httpd:<span class="hljs
 </blockquote>
 <p>と表示されたでしょうか？</p>
 <p>localにhttpd:2.4のイメージがないので、DockerHubからイメージを取得し、そのイメージからコンテナを起動している状態となります。
-<img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-02.png" alt=""></p>
+<img src="https://hiszuk.github.io/dockersample/images/ch3-1-02.png" alt=""></p>
 <h3 id="表示を書き換えます">表示を書き換えます</h3>
 <p>では、次に稼働しているコンテナに入って、表示を書き換えてみます。</p>
 <pre><code class="language-cmd"><div>&gt; docker exec -it my-apache-app /bin/bash
@@ -177,7 +177,7 @@ root@9b7e127f9c95:/usr/<span class="hljs-built_in">local</span>/apache2/htdocs<s
 <p>先ほど表示する文字を変更した時は、<strong>『コンテナ』の中</strong>に入って変更しました。これは、そのコンテナにしか有効ではありません。<br/>
 また、AWSやAzureなどのマネージドされたコンテナ環境ではコンテナは停止と同時に破棄されるのが普通なので、必要な設定はイメージ側に持たせます。</p>
 <p>httpd:2.4 というDocker公式イメージから、my-apache-app というコンテナと、my-apache-app2 というコンテナが生成され、それぞれ独立して動くようになります。
-<img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-03.png" alt=""></p>
+<img src="https://hiszuk.github.io/dockersample/images/ch3-1-03.png" alt=""></p>
 <h3 id="コンテナを停止します">コンテナを停止します</h3>
 <p>GUIから停止しする場合は「■」stopマークをクリックします。<br/>
 コマンドラインから停止する場合は以下のように入力します。</p>
@@ -337,7 +337,7 @@ SECURITY WARNING: You are building a Docker image from Windows against a non-Win
 その際にMYSQL用のパラメータを環境変数として渡して(-e XXX=YYY)起動します。</p>
 <pre><code class="language-cmd"><div>&gt; docker run -d --name my-sql --rm -e MYSQL_ROOT_PASSWORD=mysql -e MYSQL_DATABASE=sampledb -e MYSQL_APP_USER=sample -e MYSQL_APP_PASSWORD=sample -e MYSQL_HOST=localhost -p <span class="hljs-number">3306</span>:<span class="hljs-number">3306</span> sample/mysql:latest
 </div></code></pre>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-04.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-04.png" alt=""></p>
 <p>dbが完全に立ち上がったことをログで確認します。</p>
 <h2 id="初期設定確認">初期設定確認</h2>
 <p>コンテナ起動後にユーザー作成とテーブル作成を行い、初期データ登録を確認します。</p>
@@ -405,7 +405,7 @@ RawContent        : HTTP/<span class="hljs-number">1</span>.<span class="hljs-nu
                     <span class="hljs-title">The</span> <span class="hljs-title">backend</span> <span class="hljs-title">of</span> <span class="hljs-title">started</span>...
 <span class="hljs-title">Forms</span>             : {}
 <span class="hljs-title">Headers</span>           : {[<span class="hljs-title">Content</span>-<span class="hljs-title">Length</span>, 25], [<span class="hljs-title">Content</span>-<span class="hljs-title">Type</span>, <span class="hljs-title">text</span>/<span class="hljs-title">plain</span>;<span class="hljs-title">charset</span>=<span class="hljs-title">UTF</span>-8], [<span class="hljs-title">Date</span>, <span class="hljs-title">Sun</span>, 23 <span class="hljs-title">Aug</span> 2020 08:59:38 <span class="hljs-title">GMT</span>]}
-<span class="hljs-title">Images</span>            : {}
+<span class="hljs-title">https</span>://<span class="hljs-title">hiszuk.github.io</span>/<span class="hljs-title">dockersample</span>/<span class="hljs-title">images</span>            : {}
 <span class="hljs-title">InputFields</span>       : {}
 <span class="hljs-title">Links</span>             : {}
 <span class="hljs-title">ParsedHtml</span>        : <span class="hljs-title">mshtml.HTMLDocumentClass</span>
@@ -547,7 +547,7 @@ Creating <span class="hljs-number">30</span>_docker_db_1 ... done
 Creating <span class="hljs-number">30</span>_docker_api_1 ... done
 Creating <span class="hljs-number">30</span>_docker_web_1 ... done
 </div></code></pre>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-05.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-05.png" alt=""></p>
 <pre><code class="language-cmd"><div>&gt; docker container ls
 CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                                NAMES
 <span class="hljs-number">53</span>eb26fb0e99        sample/web:latest     "docker-entrypoint.s…"   <span class="hljs-number">5</span> minutes ago       Up <span class="hljs-number">5</span> minutes        <span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>:<span class="hljs-number">13000</span>-&gt;<span class="hljs-number">3000</span>/tcp              <span class="hljs-number">30</span>_docker_web_1
@@ -597,7 +597,7 @@ Content           : {"id":<span class="hljs-number">1</span>,"<span class="hljs-
 <p>RESTAPIが動作していることと、API-&gt;DBへの通信が出来ていることが確認できます。</p>
 <h3 id="webアプリ動作確認">WEBアプリ動作確認</h3>
 <p><code>http://localhost:13000/items/</code>にWEBブラウザでアクセスします。</p>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-06.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-06.png" alt=""></p>
 <p>一覧表示されましたでしょうか？</p>
 <p>データを追加して、一度全コンテナを落とします。</p>
 <p>その後再度起動して、追加したデータが消えていない(永続化された)ことを確認します。</p>
@@ -610,7 +610,7 @@ Removing <span class="hljs-number">30</span>_docker_api_1 ... done
 Removing <span class="hljs-number">30</span>_docker_db_1  ... done
 Removing network <span class="hljs-number">30</span>_docker_default
 </div></code></pre>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-07.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-07.png" alt=""></p>
 <p>完全にダウンしコンテナが削除されていることを確認する</p>
 <pre><code class="language-cmd"><div>&gt; docker-compose up -d
 Creating network "<span class="hljs-number">30</span>_docker_default" with the default driver
@@ -619,7 +619,7 @@ Creating <span class="hljs-number">30</span>_docker_api_1 ... done
 Creating <span class="hljs-number">30</span>_docker_web_1 ... done
 </div></code></pre>
 <p>再度<code>http://localhost:13000/items/</code>にWEBブラウザでアクセスします。</p>
-<p><img src="file:///c:\home\勉強会\30_DOCKER\docs\images\ch3-1-08.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/ch3-1-08.png" alt=""></p>
 <p>新たに登録した内容が消えずに表示されることを確認する</p>
 <h2 id="マルチコンテナのビルド2回目">マルチコンテナのビルド(2回目)</h2>
 <p>docker-composeではイメージのビルドも行うことができます。</p>
