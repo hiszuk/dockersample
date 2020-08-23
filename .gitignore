@@ -1,0 +1,10 @@
+web/webapp/node_modules/
+web/webapp/.nuxt
+web/webapp/dist
+
+# dotenv environment variables file
+.env
+
+mysql
+
+api/libs
