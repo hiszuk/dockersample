@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Docker勉強会(3回目) SWARMによるクラスタ体験</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="docker勉強会3回目-swarmによるクラスタ体験">Docker勉強会(3回目) SWARMによるクラスタ体験</h1>
+<p>今回は、Docke-swarm を使用して複数コンテナをスケールアウトしクラスタ運用する体験をします。</p>
+<ul>
+<li><a href="#docker%E5%8B%89%E5%BC%B7%E4%BC%9A3%E5%9B%9E%E7%9B%AE-swarm%E3%81%AB%E3%82%88%E3%82%8B%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E4%BD%93%E9%A8%93">Docker勉強会(3回目) SWARMによるクラスタ体験</a></li>
+<li><a href="#%E4%BD%93%E9%A8%93%E7%92%B0%E5%A2%83%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">体験環境について</a></li>
+<li><a href="#%E6%9C%AC%E6%97%A5%E3%81%AE%E3%82%B4%E3%83%BC%E3%83%AB">本日のゴール</a></li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89">コンテナイメージのビルド</a>
+<ul>
+<li><a href="#1-api%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E4%BD%9C%E6%88%90">1. apiイメージの作成</a></li>
+<li><a href="#2-nginx%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E4%BD%9C%E6%88%90">2. nginxイメージの作成</a></li>
+<li><a href="#3-visualizer%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E5%8F%96%E5%BE%97">3. visualizerイメージを取得</a></li>
+<li><a href="#4-haproxy%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E5%8F%96%E5%BE%97">4. haproxyイメージ取得</a></li>
+</ul>
+</li>
+<li><a href="#swarm%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E7%92%B0%E5%A2%83%E3%81%AE%E6%A7%8B%E7%AF%89">swarmクラスタ環境の構築</a>
+<ul>
+<li><a href="#1-docker-compose-%E5%86%85%E5%AE%B9%E7%A2%BA%E8%AA%8D">1. docker-compose 内容確認</a></li>
+<li><a href="#2-docker-compose%E3%81%A7%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E7%AB%8B%E3%81%A1%E4%B8%8A%E3%81%92%E3%82%8B">2. docker-composeでコンテナを立ち上げる</a></li>
+<li><a href="#3-swarm%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E3%82%92%E8%B5%B7%E5%8B%95">3. swarmクラスタを起動</a>
+<ul>
+<li><a href="#1-cli%E8%B5%B7%E5%8B%95">1) CLI起動</a></li>
+<li><a href="#2-manager-cli%E3%81%A7swarm%E5%88%9D%E6%9C%9F%E5%8C%96%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%82%92%E5%85%A5%E5%8A%9B">2) manager CLIでswarm初期化コマンドを入力</a></li>
+<li><a href="#3-%E5%90%84worker%E3%81%AEcli%E3%81%A7swarm%E5%8F%82%E5%8A%A0%E3%81%AE%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%82%92%E6%8A%95%E5%85%A5">3) 各workerのCLIでswarm参加のコマンドを投入</a></li>
+<li><a href="#4-manager-cli%E3%81%A7%E5%90%84node%E3%81%AE%E7%8A%B6%E6%85%8B%E3%82%92%E7%A2%BA%E8%AA%8D">4) manager CLIで各nodeの状態を確認</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E3%81%AE%E3%83%AC%E3%82%B8%E3%82%B9%E3%83%88%E3%83%AA%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%AB%E6%A0%BC%E7%B4%8D%E3%81%99%E3%82%8B">コンテナイメージをローカルのレジストリサーバーに格納する</a>
+<ul>
+<li><a href="#1-%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AB%E3%82%BF%E3%82%B0%E5%90%8D%E3%82%92%E4%BB%98%E3%81%91%E3%82%8B">1. コンテナイメージにタグ名を付ける</a></li>
+<li><a href="#2-%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E3%83%AC%E3%82%B8%E3%82%B9%E3%83%88%E3%83%AA%E3%81%ABimage%E3%82%92push%E3%81%99%E3%82%8B">2. ローカルレジストリにimageをpushする</a></li>
+<li><a href="#3-%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E3%83%AC%E3%82%B8%E3%82%B9%E3%83%88%E3%83%AA%E3%81%8B%E3%82%89%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92pull%E5%87%BA%E6%9D%A5%E3%82%8B%E3%81%8B%E3%83%86%E3%82%B9%E3%83%88">3. ローカルレジストリからコンテナイメージをpull出来るかテスト</a></li>
+</ul>
+</li>
+<li><a href="#service%E6%A6%82%E5%BF%B5%E3%81%AE%E7%A2%BA%E8%AA%8D">Service概念の確認</a>
+<ul>
+<li><a href="#1-%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E4%BD%9C%E6%88%90manager">1. サービス作成@manager</a></li>
+<li><a href="#2-%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E7%A2%BA%E8%AA%8D">2. サービス確認</a></li>
+<li><a href="#3-%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E3%81%AE%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%AB%E3%82%A2%E3%82%A6%E3%83%88">3. サービスのスケールアウト</a></li>
+<li><a href="#4-%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E3%81%AE%E7%B5%82%E4%BA%86%E3%81%A8%E5%89%8A%E9%99%A4">4. サービスの終了と削除</a></li>
+</ul>
+</li>
+<li><a href="#stack%E3%82%92%E4%BD%9C%E3%82%8A%E3%82%A2%E3%83%97%E3%83%AAnginx-api%E3%82%92swarm%E5%86%85%E3%81%A7%E8%B5%B7%E5%8B%95%E3%81%99%E3%82%8B">stackを作りアプリ(nginx&lt;-&gt;api)をswarm内で起動する</a>
+<ul>
+<li><a href="#1-%E3%82%AA%E3%83%BC%E3%83%90%E3%83%BC%E3%83%AC%E3%82%A4%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%81%AE%E4%BD%9C%E6%88%90">1. オーバーレイネットワークの作成</a></li>
+<li><a href="#2-stack%E3%81%AE%E7%A2%BA%E8%AA%8D">2. Stackの確認</a></li>
+<li><a href="#3-stack%E3%82%92swarm%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E3%81%AB%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%99%E3%82%8B">3. stackをswarmクラスタにデプロイする</a>
+<ul>
+<li><a href="#1-stack%E3%82%92%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%99%E3%82%8B">1) stackをデプロイする</a></li>
+<li><a href="#2-%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%95%E3%82%8C%E3%81%9Fstack%E3%82%92%E7%A2%BA%E8%AA%8D">2) デプロイされた<code>stack</code>を確認</a></li>
+<li><a href="#3-%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%95%E3%82%8C%E3%81%9F%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%99%E3%82%8B">3) デプロイされた<code>コンテナ</code>を確認する</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%91%A8%E8%BE%BA%E3%81%AE%E3%82%A2%E3%83%97%E3%83%AA%E3%82%82%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%97%E6%9C%80%E7%B5%82%E7%9A%84%E3%81%AA%E7%92%B0%E5%A2%83%E3%82%92%E6%A7%8B%E7%AF%89%E3%81%99%E3%82%8B">周辺のアプリもデプロイし最終的な環境を構築する</a>
+<ul>
+<li><a href="#1-visualizer%E3%81%AE%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">1. Visualizerのデプロイ</a>
+<ul>
+<li><a href="#1-%E6%A7%8B%E6%88%90%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%92%E7%A2%BA%E8%AA%8D">1) 構成ファイルを確認</a></li>
+<li><a href="#2-%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">2) デプロイ</a></li>
+<li><a href="#3-%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">3) 動作確認</a></li>
+</ul>
+</li>
+<li><a href="#2-ingress%E3%81%AE%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">2. Ingressのデプロイ</a>
+<ul>
+<li><a href="#1-%E6%A7%8B%E6%88%90%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%92%E7%A2%BA%E8%AA%8D-1">1) 構成ファイルを確認</a></li>
+<li><a href="#2-%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4-1">2) デプロイ</a></li>
+<li><a href="#3-%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D-1">3) 動作確認</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E3%81%AE%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">クラスタの動作確認</a></li>
+<li><a href="#%E6%9C%80%E5%BE%8C%E3%81%AB%E5%85%A8%E7%92%B0%E5%A2%83%E3%82%92%E7%A0%B4%E6%A3%84%E3%81%97%E3%81%BE%E3%81%99">最後に全環境を破棄します</a></li>
+</ul>
+<hr>
+<h1 id="体験環境について">体験環境について</h1>
+<p>通常は複数のサーバーを束ねてクラスタ運用しますが、今回の体験ではDockerコンテナを1台のサーバーに見立てて、仮想的に複数サーバーを建て、クラスタ運用を行います。</p>
+<p>仮想サーバーのコンテナは、「Dockerをホストとして機能するDockerコンテナ」を <strong>「Docker in docker」</strong> という仕組みで構築します。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm01.png" alt=""></p>
+<ul>
+<li><code>registry: </code> ローカルでコンテナイメージを保存／供給するサーバー</li>
+<li><code>manager: </code> docker swarm の管理サーバー</li>
+<li><code>worker01~03: </code> アプリを載せたコンテナを実行するサーバー</li>
+</ul>
+<h1 id="本日のゴール">本日のゴール</h1>
+<p>最終的にはプロキシサーバーとAPIで構成されたアプリを3セット立ち上げて、それらの状態をWEBページで確認でき、また、外部(ホストOS)からコンテナ内部のAPIサービスを利用できる環境を作ります。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm02.png" alt=""></p>
+<ul>
+<li>registryサーバーには今回使用するコンテナイメージ4つを格納する</li>
+<li>managerでswarmを起動し、そのクラスタにworker01～03を組み込む</li>
+<li>swarm内でコンテナ同士が通信できるよう、overlay networkを作る</li>
+<li>nginx&lt;-&gt;apiのアプリを3セットまとめて(stack化して)swarmにデプロイする</li>
+<li>swarmの状態をビジュアルに表示できるWEBアプリ Visualizerをデプロイする</li>
+<li>外部からのアクセスを内部のアプリに振り分けるためのingressを構築する</li>
+</ul>
+<hr>
+<h1 id="コンテナイメージのビルド">コンテナイメージのビルド</h1>
+<p>ローカルのレジストリサーバーに保管するイメージをあらかじめビルドしておく</p>
+<h2 id="1-apiイメージの作成">1. apiイメージの作成</h2>
+<pre><code class="language-cmd"><div><span class="hljs-built_in">cd</span> 作業ディレクトリ\api
+
+docker image build -t swtest/api:latest . 
+</div></code></pre>
+<h2 id="2-nginxイメージの作成">2. nginxイメージの作成</h2>
+<p><code>Dockerfile</code></p>
+<pre><code class="language-Dockerfile"><div><span class="hljs-keyword">FROM</span> nginx:<span class="hljs-number">1.16</span>
+
+<span class="hljs-keyword">ENV</span> http_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>           <span class="hljs-comment"># proxy設定</span>
+<span class="hljs-keyword">ENV</span> https_proxy <span class="hljs-string">'http://gwproxy.daikin.co.jp:3128'</span>
+<span class="hljs-keyword">ENV</span> no_proxy <span class="hljs-string">'127.0.0.1,localhost'</span>
+
+<span class="hljs-keyword">RUN</span><span class="bash"> apt-get update</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> apt-get install -y wget</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> wget --no-check-certificate https://github.com/progrium/entrykit/releases/download/v0.4.0/entrykit_0.4.0_linux_x86_64.tgz</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> tar -xvzf entrykit_0.4.0_linux_x86_64.tgz</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> rm entrykit_0.4.0_linux_x86_64.tgz</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> mv entrykit /usr/<span class="hljs-built_in">local</span>/bin/</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> entrykit --symlink</span>
+
+<span class="hljs-keyword">RUN</span><span class="bash"> rm /etc/nginx/conf.d/*</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> etc/nginx/nginx.conf.tmpl /etc/nginx/</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> etc/nginx/conf.d/ /etc/nginx/conf.d/</span>
+
+<span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [ \
+  <span class="hljs-string">"render"</span>, \
+      <span class="hljs-string">"/etc/nginx/nginx.conf"</span>, \            <span class="hljs-comment"># nginx.conf.tmplを元に環境変数を置き換えてnginx.confを作成する</span></span>
+      <span class="hljs-string">"--"</span>, \
+  <span class="hljs-string">"render"</span>, \
+      <span class="hljs-string">"/etc/nginx/conf.d/upstream.conf"</span>, \
+      <span class="hljs-string">"--"</span>, \
+  <span class="hljs-string">"render"</span>, \
+      <span class="hljs-string">"/etc/nginx/conf.d/public.conf"</span>, \
+      <span class="hljs-string">"--"</span> \
+]
+
+<span class="hljs-keyword">CMD</span><span class="bash"> [<span class="hljs-string">"nginx"</span>, <span class="hljs-string">"-g"</span>, <span class="hljs-string">"daemon off;"</span>]</span>
+</div></code></pre>
+<p>entrykit　を利用して、実行時の環境変数をnginxの設定ファイルへ展開するようにしている</p>
+<pre><code class="language-cmd"><div><span class="hljs-built_in">cd</span> 作業ディレクトリ\api
+
+docker image build -t swtest/nginx:latest .
+</div></code></pre>
+<h2 id="3-visualizerイメージを取得">3. visualizerイメージを取得</h2>
+<pre><code class="language-cmd"><div>docker pull dockersamples/visualizer
+</div></code></pre>
+<h2 id="4-haproxyイメージ取得">4. haproxyイメージ取得</h2>
+<pre><code class="language-cmd"><div>docker pull dockercloud/haproxy
+</div></code></pre>
+<h1 id="swarmクラスタ環境の構築">swarmクラスタ環境の構築</h1>
+<h2 id="1-docker-compose-内容確認">1. docker-compose 内容確認</h2>
+<p><code>作業ディレクトリ\docker-compose.yml</code></p>
+<pre><code class="language-yml"><div><span class="hljs-attr">version:</span> <span class="hljs-string">"3"</span>
+<span class="hljs-attr">services:</span> 
+<span class="hljs-attr">    registry:</span>
+<span class="hljs-attr">        container_name:</span> <span class="hljs-string">registry</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">registry:2.6</span>                             <span class="hljs-comment"># registryというベースイメージを使う</span>
+<span class="hljs-attr">        ports:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">5000</span><span class="hljs-string">:5000</span>                                 <span class="hljs-comment"># ホスト側5000番　docker内部5000番を割り当てる</span>
+<span class="hljs-attr">        volumes:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"./registry-data:/var/lib/registry"</span>       <span class="hljs-comment"># ホスト側 ./registry-data　registry側　/var/lib/registr を共有する</span>
+                                                        <span class="hljs-comment"># ローカルregistryのデータをホストOS側に永続化するため</span>
+<span class="hljs-attr">    manager:</span>
+<span class="hljs-attr">        container_name:</span> <span class="hljs-string">manager</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">docker:18.05.0-ce-dind</span>                   <span class="hljs-comment"># dockerイメージを使う(docker in docker)</span>
+<span class="hljs-attr">        privileged:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        ports:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-number">8000</span><span class="hljs-string">:80</span>                                   <span class="hljs-comment"># ホスト側8000番　docker内部80番を割り当てる -&gt; webapi アクセス用</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">9000</span><span class="hljs-string">:9000</span>                                 <span class="hljs-comment"># ホスト側9000番　docker内部9000番を割り当てる -&gt; Visualizer アクセス用</span>
+<span class="hljs-attr">        depends_on:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">registry</span>
+<span class="hljs-attr">        expose:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-number">3375</span>
+<span class="hljs-attr">        command:</span> <span class="hljs-string">"--insecure-registry registry:5000"</span>    <span class="hljs-comment"># registry:5000へはHTTP通信でイメージをpullできるように設定</span>
+<span class="hljs-attr">        volumes:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"./stack:/stack"</span>                          <span class="hljs-comment"># ホスト側 ./stack　registry側　/stak を共有する</span>
+                                                        <span class="hljs-comment"># stackに各stackをデプロイするためのymlを格納する(ホスト側で編集)</span>
+<span class="hljs-attr">    worker01:</span>
+<span class="hljs-attr">        container_name:</span> <span class="hljs-string">worker01</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">docker:18.05.0-ce-dind</span>                   <span class="hljs-comment"># workerにもdockerイメージを使う(docker in docker)</span>
+<span class="hljs-attr">        privileged:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        tty:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        depends_on:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-string">manager</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">registry</span>
+<span class="hljs-attr">        expose:</span> 
+<span class="hljs-bullet">            -</span> <span class="hljs-number">7946</span>                                      <span class="hljs-comment"># swarm通信用のポートを開けておく</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">7946</span><span class="hljs-string">/udp</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">4789</span><span class="hljs-string">/udp</span>
+<span class="hljs-attr">        command:</span> <span class="hljs-string">"--insecure-registry registry:5000"</span>
+
+    <span class="hljs-string">以下</span>　<span class="hljs-string">worker02、03は名前だけ違うので省略</span>
+</div></code></pre>
+<h2 id="2-docker-composeでコンテナを立ち上げる">2. docker-composeでコンテナを立ち上げる</h2>
+<pre><code class="language-cmd"><div><span class="hljs-built_in">cd</span> 作業ディレクトリ
+
+docker-compose up -d
+</div></code></pre>
+<p>下図の状態で5つのコンテナが起動されます。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm03.png" alt=""></p>
+<h2 id="3-swarmクラスタを起動">3. swarmクラスタを起動</h2>
+<p>managerコンテナのCLIを起動して、swarmクラスタを初期化します。</p>
+<h3 id="1-cli起動">1) CLI起動</h3>
+<p>managerのCLIを起動します。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm04.png" alt=""></p>
+<h3 id="2-manager-cliでswarm初期化コマンドを入力">2) manager CLIでswarm初期化コマンドを入力</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm05.png" alt=""></p>
+<pre><code class="language-sh"><div>docker swarm init
+
+Swarm initialized: current node (8hdihlyf6awy20qi8gmzf6s2v) is now a manager.
+
+To add a worker to this swarm, run the following <span class="hljs-built_in">command</span>:
+
+    docker swarm join --token SWMTKN-1-5u01a20e80avihh37pt4vrz6norpivi9udvywobzu2biy0welu-00ddrczh1m9rbni525h7o5g11 172.18.0.3:2377
+
+To add a manager to this swarm, run <span class="hljs-string">'docker swarm join-token manager'</span> and follow the instructions.
+</div></code></pre>
+<p>上記のような出力となります。</p>
+<p><code>「 docker swarm join --token SWMTKN-1-...5g11 172.18.0.3:2377 」</code></p>
+<p>が、workerをswarmクラスタに追加するためのコマンドになります。</p>
+<p>各workerのCLIを立ち上げて、<code>docker swarm join ...</code> コマンドを投入します。</p>
+<h3 id="3-各workerのcliでswarm参加のコマンドを投入">3) 各workerのCLIでswarm参加のコマンドを投入</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm06.png" alt=""></p>
+<pre><code class="language-sh"><div>docker swarm join --token SWMTKN-1-...5g11 172.18.0.3:2377
+
+This node joined a swarm as a worker.
+</div></code></pre>
+<p>全workerに同じコマンドを投入します。</p>
+<h3 id="4-manager-cliで各nodeの状態を確認">4) manager CLIで各nodeの状態を確認</h3>
+<pre><code class="language-sh"><div>docker node ls
+
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+8hdihlyf6awy20qi8gmzf6s2v *   9cdee7a3af44        Ready               Active              Leader              18.05.0-ce
+8o6onmjvagenxlmy9csgm5gz5     19be9974e0c7        Ready               Active                                  18.05.0-ce
+rtij47tsox0fimy4f2bmagjvq     6960c0f9f754        Ready               Active                                  18.05.0-ce
+n0fmlmzdh3135z3ddortlx52k     d55c16d6f52e        Ready               Active                                  18.05.0-ce
+</div></code></pre>
+<p>4台のノードが稼働しており、1台がLeaderとなっていることが分かります。</p>
+<hr>
+<h1 id="コンテナイメージをローカルのレジストリサーバーに格納する">コンテナイメージをローカルのレジストリサーバーに格納する</h1>
+<h2 id="1-コンテナイメージにタグ名を付ける">1. コンテナイメージにタグ名を付ける</h2>
+<p>ホストOSのコマンドラインから、コンテナイメージに、各ノードから参照する際のタグ名を付けます。</p>
+<p><code>@ホストOS</code></p>
+<pre><code class="language-cmd"><div>docker image tag swtest/api:latest localhost:<span class="hljs-number">5000</span>/swtest/api:latest
+docker image tag swtest/nginx:latest localhost:<span class="hljs-number">5000</span>/swtest/nginx:latest
+docker image tag dockersamples/visualizer:latest localhost:<span class="hljs-number">5000</span>/visualizer:latest
+docker image tag dockercloud/haproxy:latest localhost:<span class="hljs-number">5000</span>/haproxy:latest
+</div></code></pre>
+<h2 id="2-ローカルレジストリにimageをpushする">2. ローカルレジストリにimageをpushする</h2>
+<p>ホストOSのコマンドラインから、コンテナイメージをレジストリサーバーに格納します。</p>
+<p><code>@ホストOS</code></p>
+<pre><code class="language-cmd"><div>docker image push localhost:<span class="hljs-number">5000</span>/swtest/api:latest
+docker image push localhost:<span class="hljs-number">5000</span>/swtest/nginx:latest
+docker image push localhost:<span class="hljs-number">5000</span>/visualizer:latest
+docker image push localhost:<span class="hljs-number">5000</span>/haproxy:latest
+</div></code></pre>
+<h2 id="3-ローカルレジストリからコンテナイメージをpull出来るかテスト">3. ローカルレジストリからコンテナイメージをpull出来るかテスト</h2>
+<p>worker01から、regsitry:5000経由でコンテナイメージを取得できるかテストします。</p>
+<p>worker01のCLIを起動して、下記コマンドを入力します。</p>
+<p><code>@worker01</code></p>
+<pre><code class="language-cmd"><div>docker image pull registry:<span class="hljs-number">5000</span>/swtest/api:latest
+<span class="hljs-function">
+latest: <span class="hljs-title">Pulling</span> <span class="hljs-title">from</span> <span class="hljs-title">swtest</span>/<span class="hljs-title">api</span>
+<span class="hljs-title">e7c96db7181b</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">f910a506b6cb</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">c2274a1a0e27</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">f5dd5aa1c311</span>: <span class="hljs-title">Pull</span> <span class="hljs-title">complete</span>
+<span class="hljs-title">Digest</span>: <span class="hljs-title">sha256</span>:3<span class="hljs-title">d6261dbf843ab4d4dec65ad5a6546660f7b889fa7d5436c25523c5c5f2da5a8</span>
+<span class="hljs-title">Status</span>: <span class="hljs-title">Downloaded</span> <span class="hljs-title">newer</span> <span class="hljs-title">image</span> <span class="hljs-title">for</span> <span class="hljs-title">registry</span>:5000/<span class="hljs-title">swtest</span>/<span class="hljs-title">api:latest</span>
+</span></div></code></pre>
+<hr>
+<h1 id="service概念の確認">Service概念の確認</h1>
+<p>swarmでは一つのコンテナを複数個まとめて起動し管理することが出来ます。これにより同じコンテナのスケールアウトが可能になります。</p>
+<h2 id="1-サービス作成manager">1. サービス作成@manager</h2>
+<p>managerのCLIで下記コマンドを投入し、apiサービスを作成します。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-cmd"><div>docker service create --replicas <span class="hljs-number">1</span> --publish <span class="hljs-number">8000</span>:<span class="hljs-number">8080</span> --name api registry:<span class="hljs-number">5000</span>/swtest/api:latest
+
+g8lnlh1ylqt0fenxnv1jaqhe8
+overall progress: <span class="hljs-number">1</span> out of <span class="hljs-number">1</span> tasks
+<span class="hljs-number">1</span>/<span class="hljs-number">1</span>: running   [==================================================&gt;]
+<span class="hljs-function">verify: <span class="hljs-title">Service</span> <span class="hljs-title">converged</span>
+</span></div></code></pre>
+<h2 id="2-サービス確認">2. サービス確認</h2>
+<p><code>@manager</code></p>
+<pre><code class="language-cmd"><div>docker service ls
+
+ID                  NAME                <span class="hljs-built_in">MODE</span>                REPLICAS            IMAGE                             PORTS
+g8lnlh1ylqt0        api                 replicated          <span class="hljs-number">1</span>/<span class="hljs-number">1</span>                 registry:<span class="hljs-number">5000</span>/swtest/api:latest   *:<span class="hljs-number">8000</span>-&gt;<span class="hljs-number">8080</span>/tcp
+</div></code></pre>
+<p>サービスとして「api」が１つ起動していることが分かります。</p>
+<h2 id="3-サービスのスケールアウト">3. サービスのスケールアウト</h2>
+<p>先ほどのサービスをスケールアウトし６つまで起動します。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-cmd"><div>docker service scale api=<span class="hljs-number">6</span>
+
+api scaled to <span class="hljs-number">6</span>
+overall progress: <span class="hljs-number">6</span> out of <span class="hljs-number">6</span> tasks
+<span class="hljs-number">1</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-number">2</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-number">3</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-number">4</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-number">5</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-number">6</span>/<span class="hljs-number">6</span>: running   [==================================================&gt;]
+<span class="hljs-function">verify: <span class="hljs-title">Service</span> <span class="hljs-title">converged</span>
+</span></div></code></pre>
+<p>実行状況を確認します。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-cmd"><div>docker service ps api
+
+ID                  NAME                IMAGE                             NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+<span class="hljs-number">46</span>f9mpevo3f7        api.<span class="hljs-number">1</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   <span class="hljs-number">9</span>cdee7a3af44        Running             Running <span class="hljs-number">6</span> minutes ago
+ms1si10zr0j4        api.<span class="hljs-number">2</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   <span class="hljs-number">19</span>be9974e0c7        Running             Running about a minute ago
+n3ex8052eamg        api.<span class="hljs-number">3</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   <span class="hljs-number">6960</span>c0f9f754        Running             Running about a minute ago
+<span class="hljs-number">83601</span>xd8g72n        api.<span class="hljs-number">4</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   d55c16d6f52e        Running             Running about a minute ago
+pwor251haceu        api.<span class="hljs-number">5</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   d55c16d6f52e        Running             Running about a minute ago
+xj12h7mm8j5t        api.<span class="hljs-number">6</span>               registry:<span class="hljs-number">5000</span>/swtest/api:latest   <span class="hljs-number">9</span>cdee7a3af44        Running             Running about a minute ago
+</div></code></pre>
+<p>ここで、注目するのは、NODEの項目です。</p>
+<p>６つのプロセスが４つのノード(manager,worker01~03)にバランスを見ながら自動で振り分けられています。</p>
+<h2 id="4-サービスの終了と削除">4. サービスの終了と削除</h2>
+<p>起動したサービスを終了しコンテナを削除します。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-cmd"><div>docker service rm api
+
+api
+
+docker service ls
+
+ID                  NAME                <span class="hljs-built_in">MODE</span>                REPLICAS            IMAGE               PORTS
+</div></code></pre>
+<p>サービス削除を確認できました。</p>
+<hr>
+<h1 id="stackを作りアプリnginx-apiをswarm内で起動する">stackを作りアプリ(nginx&lt;-&gt;api)をswarm内で起動する</h1>
+<p>Stackとは複数のServiceをグルーピングした単位で、アプリケーション全体の構成を定義します。</p>
+<pre><code><code><div>container-1 -&gt; service-1 ┐
+                         ├-&gt; stack
+container-2 -&gt; service-2 ┘
+</div></code></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm07.png" alt=""></p>
+<p>上図のように、通常Stackをswarmクラスタにデプロイしただけでは、それぞれのStack用のネットワークを構成し、異なるのStackのServiceとは通信できません。</p>
+<p>複数のStack間で通信を行いたい場合は、それぞれのStackを包含する　<code>Overlay Network</code> をswamクラスタ内に作成し、各StackのServiceを所属させます。</p>
+<h2 id="1-オーバーレイネットワークの作成">1. オーバーレイネットワークの作成</h2>
+<p>manager CLIにてoverlay networkを作成します。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker network create --driver=overlay --attachable swtest_net
+</div></code></pre>
+<h2 id="2-stackの確認">2. Stackの確認</h2>
+<p>まず、stack構成ファイルを確認します。</p>
+<p><code>作業ディレクトリ\stack\webapi.yml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">version:</span> <span class="hljs-string">"3"</span>
+<span class="hljs-attr">services:</span>
+<span class="hljs-attr">    nginx:</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">registry:5000/swtest/nginx:latest</span>        <span class="hljs-comment"># ローカルレジストリのイメージから作成</span>
+<span class="hljs-attr">        deploy:</span>
+<span class="hljs-attr">            replicas:</span> <span class="hljs-number">3</span>                                 <span class="hljs-comment"># 起動数=3</span>
+<span class="hljs-attr">            placement:</span>
+<span class="hljs-attr">                constraints:</span> <span class="hljs-string">[node.role</span> <span class="hljs-string">!=</span> <span class="hljs-string">manager]</span>     <span class="hljs-comment"># manager以外のnodeで起動する</span>
+<span class="hljs-attr">        environment:</span>
+<span class="hljs-attr">            SERVICE_PORTS:</span> <span class="hljs-number">80</span>                           <span class="hljs-comment"># 内部的には80ポートを公開</span>
+<span class="hljs-attr">            BACKEND_HOST:</span> <span class="hljs-attr">swtest_api:8080</span>               <span class="hljs-comment"># リバースプロキシ先は　swtest_apiの8080ポート</span>
+<span class="hljs-attr">        depends_on:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">        networks:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">swtest_net</span>                                <span class="hljs-comment"># swtest_net というオーバーレイネットワークに所属</span>
+
+<span class="hljs-attr">    api:</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">registry:5000/swtest/api:latest</span>          <span class="hljs-comment"># ローカルレジストリのイメージから作成</span>
+<span class="hljs-attr">        deploy:</span>
+<span class="hljs-attr">            replicas:</span> <span class="hljs-number">3</span>                                 <span class="hljs-comment"># 起動数=3</span>
+<span class="hljs-attr">            placement:</span>
+<span class="hljs-attr">                constraints:</span> <span class="hljs-string">[node.role</span> <span class="hljs-string">!=</span> <span class="hljs-string">manager]</span>     <span class="hljs-comment"># manager以外のnodeで起動する</span>
+<span class="hljs-attr">        networks:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">swtest_net</span>                                <span class="hljs-comment"># swtest_net というオーバーレイネットワークに所属</span>
+
+<span class="hljs-attr">networks:</span>
+<span class="hljs-attr">    swtest_net:</span>                                         <span class="hljs-comment"># swtest_net というオーバーレイネットワークを利用する</span>
+<span class="hljs-attr">        external:</span> <span class="hljs-literal">true</span>
+</div></code></pre>
+<h2 id="3-stackをswarmクラスタにデプロイする">3. stackをswarmクラスタにデプロイする</h2>
+<h3 id="1-stackをデプロイする">1) stackをデプロイする</h3>
+<p>manager CLIにて<code>/stack/webapi.yml</code>を<code>swtest</code>としてデプロイします。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker stack deploy -c /stack/webapi.yml swtest
+
+Creating service swtest_api
+Creating service swtest_nginx
+</div></code></pre>
+<h3 id="2-デプロイされたstackを確認">2) デプロイされた<code>stack</code>を確認</h3>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker stack services swtest
+
+ID                  NAME                MODE                REPLICAS            IMAGE                               PORTS
+do79y357rahf        swtest_nginx        replicated          3/3                 registry:5000/swtest/nginx:latest
+udgryplvejvb        swtest_api          replicated          3/3                 registry:5000/swtest/api:latest
+</div></code></pre>
+<p>nginxとapiが３つづつ起動していることが確認出来ます。</p>
+<h3 id="3-デプロイされたコンテナを確認する">3) デプロイされた<code>コンテナ</code>を確認する</h3>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker stack ps -f <span class="hljs-string">"DESIRED-STATE=Running"</span> swtest
+
+ID                  NAME                IMAGE                               NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+6523s6sxk0z4        swtest_nginx.1      registry:5000/swtest/nginx:latest   6960c0f9f754        Running             Running 9 minutes ago
+s26ot14832tz        swtest_api.1        registry:5000/swtest/api:latest     6960c0f9f754        Running             Running 9 minutes ago
+9awuu3u5ztdk        swtest_nginx.2      registry:5000/swtest/nginx:latest   d55c16d6f52e        Running             Running 9 minutes ago
+wiz7gcwp4kl5        swtest_api.2        registry:5000/swtest/api:latest     19be9974e0c7        Running             Running 9 minutes ago
+kt6erv2af1rq        swtest_api.3        registry:5000/swtest/api:latest     d55c16d6f52e        Running             Running 9 minutes ago
+syp556p98zrr        swtest_nginx.3      registry:5000/swtest/nginx:latest   19be9974e0c7        Running             Running 9 minutes ago
+</div></code></pre>
+<h1 id="周辺のアプリもデプロイし最終的な環境を構築する">周辺のアプリもデプロイし最終的な環境を構築する</h1>
+<h2 id="1-visualizerのデプロイ">1. Visualizerのデプロイ</h2>
+<p>swarmクラスタ起動状況を見える化する<code>Visualizer</code>を導入します。</p>
+<h3 id="1-構成ファイルを確認">1) 構成ファイルを確認</h3>
+<p><code>作業ディレクトリ\stack\visualizer.yml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">version:</span> <span class="hljs-string">"3"</span>
+<span class="hljs-attr">services:</span>
+<span class="hljs-attr">    app:</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">registry:5000/visualizer</span>                 <span class="hljs-comment"># ローカルレジストリのイメージを使用</span>
+<span class="hljs-attr">        ports:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">"9000:8080"</span>                               <span class="hljs-comment"># 外部ポート9000番を内部ポート8080にバインド</span>
+<span class="hljs-attr">        volumes:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">/var/run/docker.sock:/var/run/docker.sock</span>
+<span class="hljs-attr">        deploy:</span>
+<span class="hljs-attr">            mode:</span> <span class="hljs-string">global</span>
+<span class="hljs-attr">            placement:</span>
+<span class="hljs-attr">                constraints:</span> <span class="hljs-string">[node.role</span> <span class="hljs-string">==</span> <span class="hljs-string">manager]</span>     <span class="hljs-comment"># managerノードに配備する</span>
+</div></code></pre>
+<p>localhost:9000 -&gt; manager:9000:manager:8080 -&gt; visualizer application という経路となります。</p>
+<h3 id="2-デプロイ">2) デプロイ</h3>
+<p>manager CLIにてvisualizer.ymlをデプロイします。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker stack deploy -c /stack/visualizer.yml visualizer
+
+Creating network visualizer_default
+Creating service visualizer_app
+</div></code></pre>
+<h3 id="3-動作確認">3) 動作確認</h3>
+<p>WEBブラウザで下記のURLにアクセスします。</p>
+<pre><code><code><div>http://localhost:9000/
+</div></code></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm08.png" alt=""></p>
+<p>各ノードでのサービス起動状況が見える化されています。</p>
+<h2 id="2-ingressのデプロイ">2. Ingressのデプロイ</h2>
+<p>swarmクラスタ内のサービスをクラスタ外から利用するためには、オーバーレイネットワーク内にアクセスする必要があります。</p>
+<p>これを実現するため、managerサーバー内に外部からのリクエストを内部のサービスに転送するプロキシを建てます。</p>
+<p>プロキシ<code>haproxy</code>を導入します。</p>
+<h3 id="1-構成ファイルを確認-1">1) 構成ファイルを確認</h3>
+<p><code>作業ディレクトリ\stack\ingress.yml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">version:</span> <span class="hljs-string">"3"</span>
+<span class="hljs-attr">services:</span>
+<span class="hljs-attr">    haproxy:</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-attr">registry:5000/haproxy</span>                    <span class="hljs-comment"># ローカルレジストリのイメージを使用</span>
+<span class="hljs-attr">        networks:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">swtest_net</span>                                <span class="hljs-comment"># オーバーレイネットワークを利用</span>
+<span class="hljs-attr">        volumes:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-string">/var/run/docker.sock:/var/run/docker.sock</span>
+<span class="hljs-attr">        deploy:</span>
+<span class="hljs-attr">            mode:</span> <span class="hljs-string">global</span>
+<span class="hljs-attr">            placement:</span>
+<span class="hljs-attr">                constraints:</span> <span class="hljs-string">[node.role</span> <span class="hljs-string">==</span> <span class="hljs-string">manager]</span>     <span class="hljs-comment"># managerノードに配備する</span>
+<span class="hljs-attr">        ports:</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">80</span><span class="hljs-string">:80</span>                                     <span class="hljs-comment"># 外部ポート80番を内部ポート80番にバインド</span>
+<span class="hljs-bullet">            -</span> <span class="hljs-number">1936</span><span class="hljs-string">:1936</span> <span class="hljs-comment"># for stats page (basic auth, stats:stats)</span>
+
+<span class="hljs-attr">networks:</span>
+<span class="hljs-attr">    swtest_net:</span>
+<span class="hljs-attr">        external:</span> <span class="hljs-literal">true</span>
+</div></code></pre>
+<p>localhost:8000 -&gt; manager:8000-&gt;80 -&gt; haproxy:80-&gt;80 -&gt; swtest_nginx:80-&gt;swtest_api:8080 -&gt; api:8080</p>
+<p>という経路となります。</p>
+<h3 id="2-デプロイ-1">2) デプロイ</h3>
+<p>manager CLIにてingress.ymlをデプロイします。</p>
+<p><code>@manager</code></p>
+<pre><code class="language-sh"><div>docker stack deploy -c /stack/ingress.yml ingress
+
+Creating service ingress_haproxy
+</div></code></pre>
+<h3 id="3-動作確認-1">3) 動作確認</h3>
+<p>WEBブラウザで下記のURLにアクセスします。</p>
+<pre><code><code><div>http://localhost:8000/
+</div></code></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm09.png" alt=""></p>
+<blockquote>
+<p>The API service is running...</p>
+</blockquote>
+<p>表示されたでしょうか？</p>
+<hr>
+<h1 id="クラスタの動作確認">クラスタの動作確認</h1>
+<p>せっかくですので、ノードをひとつ止めてみましょう。</p>
+<p>Dockerダッシュボードから、worker01を停止してみます。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm10.png" alt=""></p>
+<p>しばらくすると、自動でサービスが起動されて、３つづつになっていることがvisualizerで確認できます。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/swarm11.png" alt=""></p>
+<h1 id="最後に全環境を破棄します">最後に全環境を破棄します</h1>
+<p>ホストOSのコマンドラインで、作業ディレクトリに移動して、<code>docker-compose down</code> を実行します。</p>
+<p>コンテナイメージファイルは残りますが、swarmクラスタ設定などはなくなります。</p>
+<p>一時的に終了する場合は、作業ディレクトリで<code>docker-compose stop</code> を実行します。</p>
+<p>もちろんGUIで停止しても構いません。</p>
+<p>再度立ち上げたい場合は、作業ディレクトリで<code>docker-compose start</code> を実行します。</p>
+
+    </body>
+    </html>
