@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>ゴール</title>
+        <style>
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="ゴール">ゴール</h1>
+<p>Kubernetes環境をローカルで構築し、アプリケーションのデプロイ方法の一種である「ローリングアップデート」と「Blue/Greenデプロイ」を簡単な例で体験する。</p>
+<p>(参考)　<a href="https://cloud.google.com/solutions/application-deployment-and-testing-strategies?hl=ja">アプリケーションのデプロイとテストの戦略</a></p>
+<h1 id="目次">目次</h1>
+<ul>
+<li><a href="#%E3%82%B4%E3%83%BC%E3%83%AB">ゴール</a></li>
+<li><a href="#%E7%9B%AE%E6%AC%A1">目次</a></li>
+<li><a href="#kubernetes%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89">kubernetes環境構築</a>
+<ul>
+<li><a href="#kubernetes%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB">kubernetesのインストール</a>
+<ul>
+<li><a href="#%E5%BF%85%E3%81%9A-proxy%E8%A8%AD%E5%AE%9A%E3%82%92%E5%88%9D%E6%9C%9F%E5%8C%96"><strong>必ず</strong> PROXY設定を初期化</a></li>
+<li><a href="#kubernetes%E6%9C%89%E5%8A%B9%E5%8C%96">Kubernetes有効化</a></li>
+<li><a href="#%E5%AE%8C%E4%BA%86%E7%8A%B6%E6%85%8B">完了状態</a></li>
+</ul>
+</li>
+<li><a href="#kubernetes-dashboard%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB">Kubernetes Dashboardインストール</a>
+<ul>
+<li><a href="#%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB">インストール</a></li>
+<li><a href="#%E7%A2%BA%E8%AA%8D">確認</a></li>
+<li><a href="#dashboard%E7%AE%A1%E7%90%86%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E7%99%BB%E9%8C%B2%E3%81%A8role%E3%81%AE%E3%83%90%E3%82%A4%E3%83%B3%E3%83%89">Dashboard管理ユーザー登録とroleのバインド</a></li>
+</ul>
+</li>
+<li><a href="#ingress-nginx%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB">Ingress-nginxインストール</a>
+<ul>
+<li><a href="#%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB-1">インストール</a></li>
+<li><a href="#%E7%A2%BA%E8%AA%8D-1">確認</a></li>
+</ul>
+</li>
+<li><a href="#%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89">イメージファイルのビルド</a></li>
+<li><a href="#dashboard%E7%94%BB%E9%9D%A2%E3%82%92%E8%B5%B7%E5%8B%95">Dashboard画面を起動</a>
+<ul>
+<li><a href="#dashboard%E3%81%AB%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%99%E3%82%8B%E3%81%9F%E3%82%81%E3%81%AEtoken%E3%82%92%E5%8F%96%E5%BE%97">DashboardにログインするためのTOKENを取得</a></li>
+<li><a href="#dashboard%E3%81%AB%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E3%81%99%E3%82%8B%E3%81%9F%E3%82%81%E3%81%AEproxy%E3%82%92%E8%B5%B7%E5%8B%95%E3%81%99%E3%82%8B">dashboardにアクセスするためのPROXYを起動する</a></li>
+<li><a href="#dashboard%E8%B5%B7%E5%8B%95">dashboard起動</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#kubernetes%E3%81%AE%E6%A6%82%E5%BF%B5">kubernetesの概念</a>
+<ul>
+<li><a href="#kubernetes%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E3%81%A8node">kubernetesクラスタとNode</a></li>
+<li><a href="#kubernetes%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%BF%E3%81%A8node%E6%A6%82%E5%BF%B5%E5%9B%B3">kubernetesクラスタとNode　概念図</a>
+<ul>
+<li><a href="#master-node%E3%82%92%E6%A7%8B%E6%88%90%E3%81%99%E3%82%8B%E7%AE%A1%E7%90%86%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88">Master Nodeを構成する管理コンポーネント</a></li>
+<li><a href="#dashbord%E7%94%BB%E9%9D%A2%E3%81%A7%E7%A2%BA%E8%AA%8D">Dashbord画面で確認</a></li>
+</ul>
+</li>
+<li><a href="#namespace">Namespace</a></li>
+<li><a href="#pod">Pod</a>
+<ul>
+<li><a href="#pod%E5%8D%98%E4%BD%93">Pod単体</a></li>
+<li><a href="#pod%E3%81%AEnode%E3%81%B8%E3%81%AE%E9%85%8D%E7%BD%AE">PodのNodeへの配置</a></li>
+<li><a href="#pod%E3%82%92%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D%E5%89%8A%E9%99%A4%E3%81%BE%E3%81%A7">Podをデプロイ～動作確認～削除まで</a></li>
+<li><a href="#%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">デプロイ</a></li>
+<li><a href="#%E3%83%87%E3%83%90%E3%83%83%E3%82%B0%E7%94%A8pod%E3%81%AE%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">デバッグ用Podのデプロイ</a></li>
+<li><a href="#pod%E4%BB%AE%E6%83%B3ip%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">Pod仮想IPについて</a></li>
+<li><a href="#swtest%E3%81%AE%E6%83%85%E5%A0%B1">SWTESTの情報</a></li>
+<li><a href="#debug%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%8B%E3%82%89swtest%E3%81%AE%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">DebugコンテナからSWTESTの動作確認</a></li>
+<li><a href="#curl%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%A7%E7%A2%BA%E8%AA%8D">curlコマンドで確認</a></li>
+<li><a href="#pod%E3%81%AE%E5%89%8A%E9%99%A4">Podの削除</a></li>
+</ul>
+</li>
+<li><a href="#replicaset">ReplicaSet</a>
+<ul>
+<li><a href="#%E3%83%9E%E3%83%8B%E3%83%95%E3%82%A7%E3%82%B9%E3%83%88%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E7%A2%BA%E8%AA%8D">マニフェストファイルの確認</a></li>
+<li><a href="#replicaset%E7%94%9F%E6%88%90">ReplicaSet生成</a></li>
+<li><a href="#replicaset%E5%89%8A%E9%99%A4">ReplicaSet削除</a></li>
+</ul>
+</li>
+<li><a href="#deployment">Deployment</a>
+<ul>
+<li><a href="#deploymentreplicasetpod%E9%96%A2%E9%80%A3%E5%9B%B3">Deployment/ReplicaSet/Pod関連図</a></li>
+<li><a href="#%E4%B8%96%E4%BB%A3%E7%AE%A1%E7%90%86%E4%BB%98%E3%81%AE%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">世代管理付のデプロイ</a></li>
+<li><a href="#%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%83%A9%E3%82%A4%E3%83%B3%E3%81%8B%E3%82%89%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%81%99%E3%82%8B">コマンドラインからデプロイする</a></li>
+<li><a href="#%E3%83%AA%E3%83%93%E3%82%B8%E3%83%A7%E3%83%B3%E3%81%AE%E7%A2%BA%E8%AA%8D">リビジョンの確認</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E3%83%AD%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%A8%E3%83%AD%E3%83%BC%E3%83%AB%E3%83%90%E3%83%83%E3%82%AF">ローリングアップデートとロールバック</a>
+<ul>
+<li><a href="#%E3%83%AD%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88">ローリングアップデート</a></li>
+<li><a href="#%E3%83%9E%E3%83%8B%E3%83%95%E3%82%A7%E3%82%B9%E3%83%88%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB">マニフェストファイル</a></li>
+<li><a href="#%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%AE%E5%AE%9F%E6%96%BD">アップデートの実施</a></li>
+<li><a href="#%E5%B1%A5%E6%AD%B4%E3%81%AE%E7%A2%BA%E8%AA%8D">履歴の確認</a></li>
+<li><a href="#%E3%83%AD%E3%83%BC%E3%83%AB%E3%83%90%E3%83%83%E3%82%AF%E3%81%AE%E5%AE%9F%E6%96%BD">ロールバックの実施</a>
+<ul>
+<li><a href="#%E5%88%87%E3%82%8A%E6%9B%BF%E3%81%88%E4%B8%AD%E3%81%AE%E7%8A%B6%E6%85%8B">切り替え中の状態</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B1%A5%E6%AD%B4%E3%81%AE%E7%A2%BA%E8%AA%8D-1">履歴の確認</a></li>
+<li><a href="#%E6%9C%80%E5%BE%8C%E3%81%AB%E5%89%8A%E9%99%A4%E3%81%99%E3%82%8B">最後に削除する</a></li>
+</ul>
+</li>
+<li><a href="#servicebluegreen%E4%BD%9C%E6%88%90">Service(blue/green)作成</a>
+<ul>
+<li><a href="#bluegreen%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%83%A1%E3%83%B3%E3%83%88">blue/greenデプロイメント</a></li>
+<li><a href="#bluegreen%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9">blue/greenサービス</a></li>
+<li><a href="#%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4-1">デプロイ</a></li>
+<li><a href="#%E7%8A%B6%E6%85%8B%E7%A2%BA%E8%AA%8D">状態確認</a></li>
+<li><a href="#debug%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%81%8B%E3%82%89%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E3%81%97%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">debugコンテナからアクセスし動作確認</a></li>
+</ul>
+</li>
+<li><a href="#ingress%E3%81%AB%E3%82%88%E3%82%8Bbluegreen%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4">IngressによるBlue/Greenデプロイ</a>
+<ul>
+<li><a href="#ingress%E3%81%AB%E3%82%88%E3%82%8Bbluegreen%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8">IngressによるBlue/Greenデプロイイメージ</a></li>
+<li><a href="#ingress-nginx%E3%81%AE%E7%8A%B6%E6%B3%81%E7%A2%BA%E8%AA%8D">Ingress-nginxの状況確認</a></li>
+<li><a href="#ingress%E8%BF%BD%E5%8A%A0">Ingress追加</a></li>
+<li><a href="#%E5%8B%95%E4%BD%9C%E7%A2%BA%E8%AA%8D">動作確認</a>
+<ul>
+<li><a href="#%E7%8F%BE%E8%A1%8C%E3%83%90%E3%83%BC%E3%82%B8%E3%83%A7%E3%83%B3%E3%81%B8%E3%81%AE%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9">現行バージョンへのアクセス</a></li>
+<li><a href="#%E6%AC%A1%E6%9C%9F%E3%83%90%E3%83%BC%E3%82%B8%E3%83%A7%E3%83%B3%E3%81%B8%E3%81%AE%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9">次期バージョンへのアクセス</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#blue---green-%E3%81%B8%E3%81%AE%E5%88%87%E3%82%8A%E6%9B%BF%E3%81%88">Blue -&gt; Green への切り替え</a>
+<ul>
+<li><a href="#path%E5%88%87%E3%82%8A%E6%9B%BF%E3%81%88">path切り替え</a>
+<ul>
+<li><a href="#%E6%96%B0%E3%83%90%E3%83%BC%E3%82%B8%E3%83%A7%E3%83%B3%E3%81%B8%E3%81%AE%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9">新バージョンへのアクセス</a></li>
+<li><a href="#%E6%97%A7%E3%83%90%E3%83%BC%E3%82%B8%E3%83%A7%E3%83%B3%E3%81%B8%E3%81%AE%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9">旧バージョンへのアクセス</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%9C%80%E5%BE%8C%E3%81%AB%E5%AE%9F%E7%BF%92%E7%92%B0%E5%A2%83%E3%81%AE%E5%89%8A%E9%99%A4%E6%96%B9%E6%B3%95%E3%81%A7%E3%81%8D%E3%82%8C%E3%81%B0kubernetes%E7%92%B0%E5%A2%83%E3%81%AF%E7%A0%B4%E6%A3%84%E9%A1%98%E3%81%84%E3%81%BE%E3%81%99">最後に実習環境の削除方法(できればKubernetes環境は破棄願います)</a>
+<ul>
+<li><a href="#kubertenes%E3%83%AA%E3%82%BD%E3%83%BC%E3%82%B9%E5%89%8A%E9%99%A4">Kubertenesリソース削除</a></li>
+<li><a href="#ingress-nginx-dashboard%E5%89%8A%E9%99%A4">ingress-nginx, dashboard削除</a></li>
+<li><a href="#docker-dashboard%E3%81%A7%E7%84%A1%E5%8A%B9%E5%8C%96">Docker Dashboardで無効化</a></li>
+<li><a href="#%E4%B8%8D%E8%A6%81%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AE%E5%89%8A%E9%99%A4">不要データの削除</a></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1 id="kubernetes環境構築">kubernetes環境構築</h1>
+<h2 id="kubernetesのインストール">kubernetesのインストール</h2>
+<p>DockerDesktopからKubernetesを有効化します。</p>
+<blockquote>
+<p><strong>[ 重要 ]</strong></p>
+<p>社内LAN、VPN環境ではうまく有効化できないので、DockerDesktopのPROXY設定は必ず空にすること。<br/>
+Kubernetes有効化はiphoneのテザリング環境下、または、自宅のインターネット環境下で実施します。</p>
+<p>Kubernetes関連イメージのダウンロード部分で止まり、進退窮まり初期状態にリセットせざるを得なくなります。
+ </p>
+</blockquote>
+<h3 id="必ず-proxy設定を初期化"><strong>必ず</strong> PROXY設定を初期化</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube01.png" alt=""></p>
+<p>SettingsのResourcesでPROXIESは空白にして「Apply&amp;Restart」ボタンを押す</p>
+<hr>
+<h3 id="kubernetes有効化">Kubernetes有効化</h3>
+<ul>
+<li>Enable Kubernetesにチェックを入れる</li>
+<li>Show system containers(advanced)にチェックを入れる　→　インストール進捗が分かりやすい</li>
+<li>「Apply&amp;Reset」ボタンを押す</li>
+</ul>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube02.png" alt=""></p>
+<h3 id="完了状態">完了状態</h3>
+<p>コンテナが全てグリーンになり、画面左下のKubernetesがグリーンになりrunnningと表示されれば有効化完了です。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube03.png" alt=""></p>
+<hr>
+<h2 id="kubernetes-dashboardインストール">Kubernetes Dashboardインストール</h2>
+<p>Kubernetesの状況把握や管理のためのダッシュボードソフトをインストールします。</p>
+<h3 id="インストール">インストール</h3>
+<p>パワーシェルを起動し、作業フォルダにて次のコマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f recommended.yaml
+</div></code></pre>
+<h3 id="確認">確認</h3>
+<p>ひきつづきパワーシェルにて起動を確認</p>
+<pre><code class="language-cmd"><div>&gt; kubectl get svc -n kubernetes-dashboard
+-------------------------------------------------------------------------------
+NAME                        <span class="hljs-built_in">TYPE</span>        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+dashboard-metrics-scraper   ClusterIP   <span class="hljs-number">10</span>.<span class="hljs-number">111</span>.<span class="hljs-number">105</span>.<span class="hljs-number">244</span>   &lt;none&gt;        <span class="hljs-number">8000</span>/TCP   <span class="hljs-number">9</span>h
+kubernetes-dashboard        ClusterIP   <span class="hljs-number">10</span>.<span class="hljs-number">108</span>.<span class="hljs-number">122</span>.<span class="hljs-number">103</span>   &lt;none&gt;        <span class="hljs-number">443</span>/TCP    <span class="hljs-number">9</span>h
+-------------------------------------------------------------------------------
+</div></code></pre>
+<h3 id="dashboard管理ユーザー登録とroleのバインド">Dashboard管理ユーザー登録とroleのバインド</h3>
+<p>パワーシェルで次のコマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f create_account.yaml
+
+&gt; kubectl apply -f role_binding.yaml
+</div></code></pre>
+<hr>
+<h2 id="ingress-nginxインストール">Ingress-nginxインストール</h2>
+<p>2日目に必要なIngress-nginxをあらかじめインストールします。</p>
+<h3 id="インストール-1">インストール</h3>
+<p>パワーシェルを起動し、作業フォルダにて次のコマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f mandatory.yaml
+-------------------------------------------------------------------------------
+namespace/ingress-nginx created
+deployment.apps/default-http-backend created
+service/default-http-backend created
+configmap/nginx-configuration created
+configmap/tcp-services created
+configmap/udp-services created
+serviceaccount/nginx-ingress-serviceaccount created
+clusterrole.rbac.authorization.k8s.io/nginx-ingress-clusterrole created
+role.rbac.authorization.k8s.io/nginx-ingress-role created
+rolebinding.rbac.authorization.k8s.io/nginx-ingress-role-nisa-binding created
+clusterrolebinding.rbac.authorization.k8s.io/nginx-ingress-clusterrole-nisa-binding created
+deployment.apps/nginx-ingress-controller created
+-------------------------------------------------------------------------------
+
+&gt; kubectl apply -f cloud-generic.yaml
+-------------------------------------------------------------------------------
+service/ingress-nginx created
+-------------------------------------------------------------------------------
+</div></code></pre>
+<h3 id="確認-1">確認</h3>
+<p>ひきつづきパワーシェルにて起動を確認</p>
+<pre><code class="language-cmd"><div>&gt; kubectl get svc -n ingress-nginx
+-------------------------------------------------------------------------------
+NAME                   <span class="hljs-built_in">TYPE</span>           CLUSTER-IP       EXTERNAL-IP   PORT(S)                        AGE
+default-http-backend   ClusterIP      <span class="hljs-number">10</span>.<span class="hljs-number">105</span>.<span class="hljs-number">175</span>.<span class="hljs-number">142</span>   &lt;none&gt;        <span class="hljs-number">80</span>/TCP                         <span class="hljs-number">2</span>m27s
+ingress-nginx          LoadBalancer   <span class="hljs-number">10</span>.<span class="hljs-number">105</span>.<span class="hljs-number">219</span>.<span class="hljs-number">79</span>    localhost     <span class="hljs-number">9000</span>:<span class="hljs-number">31923</span>/TCP,<span class="hljs-number">443</span>:<span class="hljs-number">31166</span>/TCP   <span class="hljs-number">101</span>s
+-------------------------------------------------------------------------------
+</div></code></pre>
+<hr>
+<h2 id="イメージファイルのビルド">イメージファイルのビルド</h2>
+<p>予め今回使用するイメージファイルをビルド・PULLしておきます。</p>
+<p>パワーシェルにて下記バッチを起動</p>
+<pre><code class="language-cmd"><div>&gt; .\build_image.bat
+
+-------------------------------------------------------------------------------
+    :
+    :
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+swtest/nginx        latest              <span class="hljs-number">8</span>d71d4b00e5f        <span class="hljs-number">28</span> hours ago        <span class="hljs-number">170</span>MB
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+swtest/api          v2                  <span class="hljs-number">51</span>e06a4c2b89        <span class="hljs-number">5</span> hours ago         <span class="hljs-number">121</span>MB
+swtest/api          latest              <span class="hljs-number">6380831691</span>ba        <span class="hljs-number">28</span> hours ago        <span class="hljs-number">121</span>MB
+
+REPOSITORY          TAG                 IMAGE ID            CREATED              SIZE
+swtest/debug        latest              <span class="hljs-number">421</span>bf1f5871d        About a minute ago   <span class="hljs-number">8</span>.<span class="hljs-number">67</span>MB
+-------------------------------------------------------------------------------
+</div></code></pre>
+<br/>
+<hr>
+<h2 id="dashboard画面を起動">Dashboard画面を起動</h2>
+<h3 id="dashboardにログインするためのtokenを取得">DashboardにログインするためのTOKENを取得</h3>
+<p><strong>[ 重要 ]</strong>　次のコマンドは必ずパワーシェルで実行すること。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | sls admin-user | ForEach-Object { $_ -Split '\s+' } | Select -First <span class="hljs-number">1</span>)
+
+-------------------------------------------------------------------------------
+<span class="hljs-function">Name:         <span class="hljs-title">admin</span>-<span class="hljs-title">user</span>-<span class="hljs-title">token</span>-8<span class="hljs-title">db5m</span>
+<span class="hljs-title">Namespace</span>:    <span class="hljs-title">kubernetes</span>-<span class="hljs-title">dashboard</span>
+<span class="hljs-title">Labels</span>:       &lt;<span class="hljs-title">none</span>&gt;
+<span class="hljs-title">Annotations</span>:  <span class="hljs-title">kubernetes.io</span>/<span class="hljs-title">service</span>-<span class="hljs-title">account.name</span>: <span class="hljs-title">admin</span>-<span class="hljs-title">user</span>
+              <span class="hljs-title">kubernetes.io</span>/<span class="hljs-title">service</span>-<span class="hljs-title">account.uid</span>: 7<span class="hljs-title">b982cb1</span>-97<span class="hljs-title">a4</span>-4<span class="hljs-title">c83</span>-<span class="hljs-title">ae58</span>-<span class="hljs-title">c0514d77d656</span>
+
+<span class="hljs-title">Type</span>:  <span class="hljs-title">kubernetes.io</span>/<span class="hljs-title">service</span>-<span class="hljs-title">account</span>-<span class="hljs-title">token</span>
+
+<span class="hljs-title">Data</span>
+====
+<span class="hljs-title">ca.crt</span>:     1025 <span class="hljs-title">bytes</span>
+<span class="hljs-title">namespace</span>:  20 <span class="hljs-title">bytes</span>
+<span class="hljs-title">token</span>:      <span class="hljs-title">eyJhbGciOiJSUzI1NiIsImtpZCI6IlA1SDBab2ozYlZ4cDY4Ry1lMXE4WGc5SW5PcmgxYl9fYUVFY3NyZlpCTVUifQ</span>.........
+-------------------------------------------------------------------------------
+</span></div></code></pre>
+<h3 id="dashboardにアクセスするためのproxyを起動する">dashboardにアクセスするためのPROXYを起動する</h3>
+<pre><code><code><div>&gt;kubectl proxy
+
+-------------------------------------------------------------------------------
+Starting to serve on 127.0.0.1:8001
+-------------------------------------------------------------------------------
+</div></code></code></pre>
+<h3 id="dashboard起動">dashboard起動</h3>
+<p>下記URLをブラウザで開く</p>
+<pre><code><code><div>http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+</div></code></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube04.png" alt=""></p>
+<ul>
+<li>トークンを選択する</li>
+<li>パワーシェル画面に表示されているTOKENをコピーし、WEB画面のトークン部分にペーストする</li>
+<li>「サインイン」ボタンをクリックする</li>
+</ul>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube05.png" alt=""></p>
+<hr>
+<h1 id="kubernetesの概念">kubernetesの概念</h1>
+<p>kubernetesクラスタで実行されるアプリケーションは様々なリソースと協調して動作することで成立している。(コンテナ・オーケストレーションと呼ばれる)</p>
+<p>以下にkubernetesのリソース一覧をまとめる。*付は今回実習で体験する。</p>
+<table>
+<thead>
+<tr>
+<th>リソース名</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node*</td>
+<td>Kubernetesクラスタで実行するコンテナを配置するためのサーバー</td>
+</tr>
+<tr>
+<td>Namespace*</td>
+<td>Kuberneteクラスタ内で作る仮想的なクラスタ</td>
+</tr>
+<tr>
+<td>Pod*</td>
+<td>コンテナの集合体の単位。コンテナを実行する方法を定義する</td>
+</tr>
+<tr>
+<td>ReplicaSet*</td>
+<td>同じ仕様のPodを複数生成・管理する</td>
+</tr>
+<tr>
+<td>Deployment*</td>
+<td>ReplicaSetの世代を管理する</td>
+</tr>
+<tr>
+<td>Service*</td>
+<td>Podの集合にアクセスするための経路を定義する</td>
+</tr>
+<tr>
+<td>Ingress*</td>
+<td>ServiceをKubernetesの外部に公開する</td>
+</tr>
+<tr>
+<td>ConfigMap</td>
+<td>設定情報を定義し、Podに供給する</td>
+</tr>
+<tr>
+<td>PersistentVolume</td>
+<td>Podが利用するストレージのサイズや種別を定義する</td>
+</tr>
+<tr>
+<td>PersistentVolumeClaim</td>
+<td>PersisitentVolumeを動的に確保する</td>
+</tr>
+<tr>
+<td>StorageClass</td>
+<td>PersistentVolumeが確保するストレージの種類を定義する</td>
+</tr>
+<tr>
+<td>StatefulSet</td>
+<td>同じ仕様で一意性のあるPosを複数生成・管理する</td>
+</tr>
+<tr>
+<td>Job</td>
+<td>常駐目的ではない複数のPodを作成し、正常終了することを保証する</td>
+</tr>
+<tr>
+<td>CronJob</td>
+<td>cron記法でスケジューリングして実行されるJob</td>
+</tr>
+<tr>
+<td>Secret</td>
+<td>認証情報等の機密データを定義する</td>
+</tr>
+<tr>
+<td>Role</td>
+<td>Namespace内で操作可能なKubertenesリソースのルールを定義する</td>
+</tr>
+<tr>
+<td>RoleBinding</td>
+<td>RoleとKubernetesリソースを利用するユーザーを紐付ける</td>
+</tr>
+<tr>
+<td>ClusterRole</td>
+<td>Cluster全体で操作可能なKubertenesリソースのルールを定義する</td>
+</tr>
+<tr>
+<td>ClusterRoleBinding</td>
+<td>ClusterRoleとKubernetesリソースを利用するユーザーを紐付ける</td>
+</tr>
+<tr>
+<td>ServiceAccont</td>
+<td>PodにKubernetesリソースを操作させる際に利用するユーザー</td>
+</tr>
+</tbody>
+</table>
+<p><br/></p>
+<h2 id="kubernetesクラスタとnode">kubernetesクラスタとNode</h2>
+<ul>
+<li>KubernetesクラスタはKubernetesの様々なリソースを管理する集合体のこと。</li>
+<li>その中で最も大きい概念がNode（ホストのこと）となる。</li>
+<li>Kubernetesクラスタには全体を管理する役割のMaster Nodeが少なくとも一つは必要。</li>
+</ul>
+<h2 id="kubernetesクラスタとnode概念図">kubernetesクラスタとNode　概念図</h2>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube38.png" alt=""></p>
+<p><br/></p>
+<h3 id="master-nodeを構成する管理コンポーネント">Master Nodeを構成する管理コンポーネント</h3>
+<table>
+<thead>
+<tr>
+<th>コンポーネント名</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>kube-apiserver</td>
+<td>KubernetesのAPIを公開するコンポーネント。kubectlからのリソース操作を受け付ける</td>
+</tr>
+<tr>
+<td>etcd</td>
+<td>高可用性を備えた分散キーバリューストア。Kubernetesのバッキングストアとして利用される</td>
+</tr>
+<tr>
+<td>kube-scheduler</td>
+<td>Nodeを監視し、コンテナを配置する最適なNodeを選択する</td>
+</tr>
+<tr>
+<td>kube-controller-manager</td>
+<td>リソースを制御するコントローラを実行</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3 id="dashbord画面で確認">Dashbord画面で確認</h3>
+<ul>
+<li>ネームスペース：kube-system　を選択</li>
+<li>概要をクリック</li>
+</ul>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube06.png" alt=""></p>
+<hr>
+<h2 id="namespace">Namespace</h2>
+<p>NamespaceとはKubernetesクラスタ内に入れ子となる仮想的なクラスタ</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube07.png" alt=""></p>
+<hr>
+<h2 id="pod">Pod</h2>
+<p>コンテナの集合体の単位で少なくともひとつのコンテナを持つ
+Dockerコンテナ単体、あるいはDockerコンテナの集合体</p>
+<h3 id="pod単体">Pod単体</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube39.png" alt="Pod単体の絵"></p>
+ <br/>
+<h3 id="podのnodeへの配置">PodのNodeへの配置</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube41.png" alt="Nodeへの配置図"></p>
+<p>※ひとつのPod内のコンテナが別々のノードに配置されることはない</p>
+<br/>
+<hr>
+<h3 id="podをデプロイ動作確認削除まで">Podをデプロイ～動作確認～削除まで</h3>
+<p>マニフェストファイル:　<code>swtest-pod.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>                          <span class="hljs-comment"># リソース種類を表す(Pod,ReplicaSet,Deployment...)</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  containers:</span>                      <span class="hljs-comment"># Podなので配下にコンテナの仕様を記載する</span>
+<span class="hljs-attr">  - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">    image:</span> <span class="hljs-string">swtest/nginx:latest</span>     <span class="hljs-comment"># 使用するイメージ</span>
+<span class="hljs-attr">    imagePullPolicy:</span> <span class="hljs-string">Never</span>         <span class="hljs-comment"># 必ずローカルを使用</span>
+<span class="hljs-attr">    env:</span>
+<span class="hljs-attr">    - name:</span> <span class="hljs-string">BACKEND_HOST</span>           <span class="hljs-comment"># 環境変数設定</span>
+<span class="hljs-attr">      value:</span> <span class="hljs-attr">localhost:8080</span>        <span class="hljs-comment"># バックエンドのlocalhost:8080へフォワードする</span>
+<span class="hljs-attr">    ports:</span>
+<span class="hljs-attr">    - containerPort:</span> <span class="hljs-number">80</span>            <span class="hljs-comment"># コンテナポートとしてExposeする番号を指定</span>
+<span class="hljs-attr">  - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">    image:</span> <span class="hljs-string">swtest/api:latest</span>       <span class="hljs-comment"># 使用するイメージ</span>
+<span class="hljs-attr">    imagePullPolicy:</span> <span class="hljs-string">Never</span>         <span class="hljs-comment"># 必ずローカルを使用</span>
+<span class="hljs-attr">    ports:</span>
+<span class="hljs-attr">    - containerPort:</span> <span class="hljs-number">8080</span>          <span class="hljs-comment"># コンテナポートとしてExposeする番号を指定</span>
+</div></code></pre>
+<h3 id="デプロイ">デプロイ</h3>
+<p>Dashboard画面からデプロイします</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube08.png" alt=""></p>
+<ol>
+<li>画面右上「＋」マークをクリック</li>
+<li>「ファイルから作成」を選択</li>
+<li>「…」をクリックし<code>swtest-pod.yaml</code>を選択</li>
+<li>「アップロード」ボタンをクリック</li>
+</ol>
+<p>下図のようになれば正常にデプロイできています。</p>
+<br/>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube09.png" alt=""></p>
+<h3 id="デバッグ用podのデプロイ">デバッグ用Podのデプロイ</h3>
+<p><code>debug-pod.yaml</code>を同様にデプロイする</p>
+<hr>
+<h3 id="pod仮想ipについて">Pod仮想IPについて</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube40.png" alt="仮想IP図　デバッグコンテナからSWTESTへのアクセス"></p>
+<h3 id="swtestの情報">SWTESTの情報</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube10.png" alt=""></p>
+<h3 id="debugコンテナからswtestの動作確認">DebugコンテナからSWTESTの動作確認</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube11.png" alt=""></p>
+<h3 id="curlコマンドで確認">curlコマンドで確認</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube12.png" alt=""></p>
+<p><br/></p>
+<h3 id="podの削除">Podの削除</h3>
+<p>Dashboardを使ってswtestのPodを削除します。</p>
+<p>メニューの「ワークロード」＞「ポッド」を選択します。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube13.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube14.png" alt=""></p>
+<hr>
+<h2 id="replicaset">ReplicaSet</h2>
+<p>同一仕様のPodの複製数を管理・制御する</p>
+<p>PodのマニフェストファイルからはひとつのPodしか生成出来ない。</p>
+<p>これを複数同時に生成可能なのが「ReplicaSet」。</p>
+<p><br/></p>
+<h3 id="マニフェストファイルの確認">マニフェストファイルの確認</h3>
+<p>マニフェストファイル: <code>swtest-replicaset.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">ReplicaSet</span>            <span class="hljs-comment"># 属性が「ReplicaSet」となる</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>               <span class="hljs-comment"># 作成するPodの数を指定</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    matchLabels:</span>
+<span class="hljs-attr">      app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  template:</span>                 <span class="hljs-comment"># template以下はPodのそれと同様</span>
+<span class="hljs-attr">    metadata:</span>
+<span class="hljs-attr">      labels:</span>
+<span class="hljs-attr">        app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    spec:</span>
+<span class="hljs-attr">      containers:</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/nginx:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          env:</span>
+<span class="hljs-attr">            - name:</span> <span class="hljs-string">BACKEND_HOST</span>
+<span class="hljs-attr">              value:</span> <span class="hljs-attr">localhost:8080</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/api:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">8080</span>
+</div></code></pre>
+<h3 id="replicaset生成">ReplicaSet生成</h3>
+<p>Dashboardからマニフェストファイルを選択し、ReplicaSetを生成します。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube15.png" alt=""></p>
+<p><br/></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube16.png" alt=""></p>
+<p><br/></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube17.png" alt=""></p>
+<p><br/></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube18.png" alt=""></p>
+<p><br/></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube19.png" alt=""></p>
+<p><br/>
+　<br/></p>
+<h3 id="replicaset削除">ReplicaSet削除</h3>
+<p>Dashboardのレプリカセットのメニューから、先ほど生成したレプリカセットを削除する。</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube20.png" alt=""></p>
+<p><br/>
+　<br/></p>
+<hr>
+<h2 id="deployment">Deployment</h2>
+<ul>
+<li><strong>Deployment</strong> とは、ReplicaSetの上位リソース。</li>
+<li>Deploymentはアプリケーションデプロイの基本単位となるリソース。</li>
+<li>ReplicaSetを管理・操作することができる。</li>
+<li>Deploymentは世代管理機能を持っておりデプロイのロールバックが可能。</li>
+<li>実運用ではReplicaSetを直接用いる事は少なく、ほとんどがDeploymentのマニフェストファイルで運用している。</li>
+</ul>
+<h3 id="deploymentreplicasetpod関連図">Deployment/ReplicaSet/Pod関連図</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube42.png" alt=""></p>
+ <br/>
+<h3 id="世代管理付のデプロイ">世代管理付のデプロイ</h3>
+<p>マニフェストファイル: <code>swtest-deployment.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>        <span class="hljs-comment"># ReplicaSetと異なるのはkindだけ</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    matchLabels:</span>
+<span class="hljs-attr">      app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  template:</span>
+<span class="hljs-attr">    metadata:</span>
+<span class="hljs-attr">      labels:</span>
+<span class="hljs-attr">        app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    spec:</span>
+<span class="hljs-attr">      containers:</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/nginx:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          env:</span>
+<span class="hljs-attr">            - name:</span> <span class="hljs-string">BACKEND_HOST</span>
+<span class="hljs-attr">              value:</span> <span class="hljs-attr">localhost:8080</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/api:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">8080</span>
+</div></code></pre>
+<h3 id="コマンドラインからデプロイする">コマンドラインからデプロイする</h3>
+<p>作業フォルダより、下記コマンドを投入し、アプリケーションをデプロイする。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f swtest-deployment.yaml --record
+
+deployment.apps/swtest created
+</div></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube21.png" alt=""></p>
+<h3 id="リビジョンの確認">リビジョンの確認</h3>
+<pre><code class="language-cmd"><div>&gt; kubectl rollout history deployment swtest
+
+deployment.apps/swtest
+REVISION  CHANGE-CAUSE
+<span class="hljs-number">1</span>         kubectl.exe apply --filename=swtest-deployment.yaml --record=true
+
+</div></code></pre>
+<hr>
+<h1 id="ローリングアップデートとロールバック">ローリングアップデートとロールバック</h1>
+<h2 id="ローリングアップデート">ローリングアップデート</h2>
+<p>アプリのダウンタイムをゼロで、新しいバージョンに順次切り替えることをローリングアップデートという。</p>
+<p>今回swtest/apiのバージョンがv2に変更になった場合を想定したローリングアップデートを行う。</p>
+<p><img src="https://cloud.google.com/solutions/images/application-deployment-and-testing-strategies-rolling-update-deployment.svg?hl=ja" alt="ローリングアップデート"></p>
+<h2 id="マニフェストファイル">マニフェストファイル</h2>
+<p>新バージョンのマニフェストファイル: <code>swtest-deployment-v2.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    matchLabels:</span>
+<span class="hljs-attr">      app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  template:</span>
+<span class="hljs-attr">    metadata:</span>
+<span class="hljs-attr">      labels:</span>
+<span class="hljs-attr">        app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    spec:</span>
+<span class="hljs-attr">      containers:</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/nginx:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          env:</span>
+<span class="hljs-attr">            - name:</span> <span class="hljs-string">BACKEND_HOST</span>
+<span class="hljs-attr">              value:</span> <span class="hljs-attr">localhost:8080</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/api:v2</span>      <span class="hljs-comment"># apiアプリバージョンがlatestからv2になった</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">8080</span>
+</div></code></pre>
+<h2 id="アップデートの実施">アップデートの実施</h2>
+<p>作業フォルダで下記コマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f swtest-deployment-v2.yaml --record
+
+deployment.apps/swtest configured
+
+</div></code></pre>
+<h2 id="履歴の確認">履歴の確認</h2>
+<pre><code class="language-cmd"><div>&gt; kubectl rollout history deployment swtest
+
+deployment.apps/swtest
+REVISION  CHANGE-CAUSE
+<span class="hljs-number">1</span>         kubectl.exe apply --filename=swtest-deployment.yaml --record=true
+<span class="hljs-number">2</span>         kubectl.exe apply --filename=swtest-deployment-v2.yaml --record=true
+</div></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube22.png" alt=""></p>
+<h2 id="ロールバックの実施">ロールバックの実施</h2>
+<p>新バージョンに何らかの問題があった場合、旧バージョンへロールバックします。</p>
+<p>作業フォルダで下記コマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl rollout undo deployment swtest
+
+deployment.apps/swtest rolled back
+</div></code></pre>
+<h3 id="切り替え中の状態">切り替え中の状態</h3>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube23.png" alt=""></p>
+<h2 id="履歴の確認-1">履歴の確認</h2>
+<pre><code class="language-cmd"><div>&gt; kubectl rollout history deployment swtest
+
+deployment.apps/swtest
+REVISION  CHANGE-CAUSE
+<span class="hljs-number">2</span>         kubectl.exe apply --filename=swtest-deployment-v2.yaml --record=true
+<span class="hljs-number">3</span>         kubectl.exe apply --filename=swtest-deployment.yaml --record=true
+</div></code></pre>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube24.png" alt=""></p>
+<h2 id="最後に削除する">最後に削除する</h2>
+<pre><code class="language-cmd"><div>&gt; kubectl delete -f swtest-deployment.yaml 
+
+deployment.apps "swtest" deleted
+</div></code></pre>
+<hr>
+<h1 id="servicebluegreen作成">Service(blue/green)作成</h1>
+<ul>
+<li><strong>Service</strong> とはPodの集合体(ReplicaSet)に対して経路やサービスディスカバリを提供</li>
+<li>Serviceのターゲットはラベルセレクタにより決定される</li>
+</ul>
+ <br/>
+<p><img src="https://cloud.google.com/solutions/images/application-deployment-and-testing-strategies-blue-green-deployment.svg?hl=ja" alt="Blue/Green デプロイ パターン"></p>
+ <br/>
+<p>Blue/Greenデプロイメントを実現するため、下記2つのサービス－ReplicaSetを作成します。</p>
+<ol>
+<li>Blueサービス → Blueデプロイメント　(swtest/api:latest)</li>
+<li>Greenサービス → Greenデプロイメント　(swtest/api:v2)</li>
+</ol>
+<h2 id="bluegreenデプロイメント">blue/greenデプロイメント</h2>
+<p>マニフェストファイル: <code>swtest-deployment-blue.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest-blue</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    release:</span> <span class="hljs-string">blue</span>           <span class="hljs-comment"># releaseというラベルでblue/greenを切り替える</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    matchLabels:</span>
+<span class="hljs-attr">      app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">      release:</span> <span class="hljs-string">blue</span>
+<span class="hljs-attr">  template:</span>
+<span class="hljs-attr">    metadata:</span>
+<span class="hljs-attr">      labels:</span>
+<span class="hljs-attr">        app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">        release:</span> <span class="hljs-string">blue</span>
+<span class="hljs-attr">    spec:</span>
+<span class="hljs-attr">      containers:</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/nginx:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          env:</span>
+<span class="hljs-attr">            - name:</span> <span class="hljs-string">BACKEND_HOST</span>
+<span class="hljs-attr">              value:</span> <span class="hljs-attr">localhost:8080</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/api:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">8080</span>
+</div></code></pre>
+<p>マニフェストファイル: <code>swtest-deployment-green.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest-green</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    release:</span> <span class="hljs-string">green</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    matchLabels:</span>
+<span class="hljs-attr">      app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">      release:</span> <span class="hljs-string">green</span>
+<span class="hljs-attr">  template:</span>
+<span class="hljs-attr">    metadata:</span>
+<span class="hljs-attr">      labels:</span>
+<span class="hljs-attr">        app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">        release:</span> <span class="hljs-string">green</span>
+<span class="hljs-attr">    spec:</span>
+<span class="hljs-attr">      containers:</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">nginx</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/nginx:latest</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          env:</span>
+<span class="hljs-attr">            - name:</span> <span class="hljs-string">BACKEND_HOST</span>
+<span class="hljs-attr">              value:</span> <span class="hljs-attr">localhost:8080</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">        - name:</span> <span class="hljs-string">api</span>
+<span class="hljs-attr">          image:</span> <span class="hljs-string">swtest/api:v2</span>          <span class="hljs-comment"># 新バージョンのAPI</span>
+<span class="hljs-attr">          imagePullPolicy:</span> <span class="hljs-string">Never</span>
+<span class="hljs-attr">          ports:</span>
+<span class="hljs-attr">            - containerPort:</span> <span class="hljs-number">8080</span>
+</div></code></pre>
+<h2 id="bluegreenサービス">blue/greenサービス</h2>
+<p>マニフェストファイル: <code>swtest-servvice.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest-blue</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    release:</span> <span class="hljs-string">blue</span>       <span class="hljs-comment"># release=blueのReplicaSetはswtest-blueサービス</span>
+<span class="hljs-attr">  ports:</span>
+<span class="hljs-attr">    - name:</span> <span class="hljs-string">http</span>        <span class="hljs-comment"># httpの80番ポートをswtestに振り当てる</span>
+<span class="hljs-attr">      port:</span> <span class="hljs-number">80</span>
+
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest-green</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  selector:</span>
+<span class="hljs-attr">    app:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">    release:</span> <span class="hljs-string">green</span>      <span class="hljs-comment"># release=greenのReplicaSetはswtest-greenサービス</span>
+<span class="hljs-attr">  ports:</span>
+<span class="hljs-attr">    - name:</span> <span class="hljs-string">http</span>        <span class="hljs-comment"># httpの80番ポートをswtestに振り当てる</span>
+<span class="hljs-attr">      port:</span> <span class="hljs-number">80</span>
+</div></code></pre>
+<h2 id="デプロイ-1">デプロイ</h2>
+<p>作業フォルダで下記コマンドを投入する。</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f swtest-deployment-blue.yaml --record
+
+&gt; kubectl apply -f swtest-deployment-green.yaml --record
+
+&gt; kubectl apply -f swtest-service.yaml
+</div></code></pre>
+<p><br/></p>
+<h2 id="状態確認">状態確認</h2>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube25.png" alt=""></p>
+<p><br/></p>
+<h2 id="debugコンテナからアクセスし動作確認">debugコンテナからアクセスし動作確認</h2>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube26.png" alt=""></p>
+<hr>
+<h1 id="ingressによるbluegreenデプロイ">IngressによるBlue/Greenデプロイ</h1>
+<h2 id="ingressによるbluegreenデプロイイメージ">IngressによるBlue/Greenデプロイイメージ</h2>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube43.png" alt="IngressによるBlue/Greenデプロイ"></p>
+<br/>
+<h2 id="ingress-nginxの状況確認">Ingress-nginxの状況確認</h2>
+<p>メニューのネームスペースから <code>ingress-nginx</code> を選択し、メニューの「概要」をクリックすると下記画面表示となる。</p>
+<br/>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube27.png" alt=""></p>
+<br/>
+画面中の「外部エンドポイント」のURLリンクをクリックすると、下記画面が新たに開けば正常に動作している。
+<p><img src="https://hiszuk.github.io/dockersample/images/kube28.png" alt=""></p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube30.png" alt=""></p>
+<hr>
+<h2 id="ingress追加">Ingress追加</h2>
+<p>マニフェストファイル: <code>swtest-ingress.yaml</code></p>
+<pre><code class="language-yaml"><div><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span>
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> <span class="hljs-string">swtest</span>
+<span class="hljs-attr">  annotations:</span>
+    <span class="hljs-string">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/</span>
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  rules:</span>
+<span class="hljs-attr">    - host:</span> <span class="hljs-string">swtest.api.local</span>
+<span class="hljs-attr">      http:</span>
+<span class="hljs-attr">        paths:</span>
+<span class="hljs-attr">          - path:</span> <span class="hljs-string">/</span>                         <span class="hljs-comment"># 現行バージョンは/でアクセス</span>
+<span class="hljs-attr">            backend:</span>
+<span class="hljs-attr">              serviceName:</span> <span class="hljs-string">swtest-blue</span>
+<span class="hljs-attr">              servicePort:</span> <span class="hljs-number">80</span>
+<span class="hljs-attr">          - path:</span> <span class="hljs-string">/staging</span>                  <span class="hljs-comment"># 新バージョンは/stagingでアクセス</span>
+<span class="hljs-attr">            backend:</span>
+<span class="hljs-attr">              serviceName:</span> <span class="hljs-string">swtest-green</span>
+<span class="hljs-attr">              servicePort:</span> <span class="hljs-number">80</span>
+
+</div></code></pre>
+<p>作業フォルダで下記コマンドを投入する</p>
+<pre><code class="language-cmd"><div>&gt; kubectl apply -f swtest-ingress.yaml
+
+ingress.networking.k8s.io/swtest configured
+</div></code></pre>
+<br/>
+<p>下図のようにイングレスが追加される</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube31.png" alt=""></p>
+<br/>
+<h2 id="動作確認">動作確認</h2>
+<h3 id="現行バージョンへのアクセス">現行バージョンへのアクセス</h3>
+<p>Postmanで動作確認を行います</p>
+<ul>
+<li>URL: <a href="http://localhost:9000/">http://localhost:9000/</a></li>
+<li>Headers: Host -&gt; swtest.api.local</li>
+<li>「Send」ボタンクリック</li>
+</ul>
+<p>現行バージョンの応答が返る</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube32.png" alt=""></p>
+<h3 id="次期バージョンへのアクセス">次期バージョンへのアクセス</h3>
+<ul>
+<li>URL: <a href="http://localhost:9000/staging/">http://localhost:9000/staging/</a></li>
+<li>Headers: Host -&gt; swtest.api.local</li>
+<li>「Send」ボタンクリック</li>
+</ul>
+<p>次期バージョンの応答が返る</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube33.png" alt=""></p>
+<hr>
+<h1 id="blue---green-への切り替え">Blue -&gt; Green への切り替え</h1>
+<h2 id="path切り替え">path切り替え</h2>
+<p>マニフェストファイルの「path」を入れ替えることによりGreenをリリースする</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube36.png" alt=""></p>
+<br/>
+<p>オンラインからpathを書き換えると即時にBlueからGreenにアプリケーションが切り替わる</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube37.png" alt=""></p>
+<br/>
+<h3 id="新バージョンへのアクセス">新バージョンへのアクセス</h3>
+<p>Postmanで動作確認を行います</p>
+<ul>
+<li>URL: <a href="http://localhost:9000/">http://localhost:9000/</a></li>
+<li>Headers: Host -&gt; swtest.api.local</li>
+<li>「Send」ボタンクリック</li>
+</ul>
+<p>新バージョンの応答が返る</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube34.png" alt=""></p>
+<br/>
+<h3 id="旧バージョンへのアクセス">旧バージョンへのアクセス</h3>
+<ul>
+<li>URL: <a href="http://localhost:9000/staging/">http://localhost:9000/staging/</a></li>
+<li>Headers: Host -&gt; swtest.api.local</li>
+<li>「Send」ボタンクリック</li>
+</ul>
+<p>旧バージョンの応答が返る</p>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube35.png" alt=""></p>
+<br/>
+<hr>
+<h1 id="最後に実習環境の削除方法できればkubernetes環境は破棄願います">最後に実習環境の削除方法(できればKubernetes環境は破棄願います)</h1>
+<p>次回予定の、 <strong><code>Apache Kafka</code></strong> はDocker環境で実施します。Kubertenes環境が残っていると、動作が重くなります。<br/>
+出来れば次回実習までにKubertenes環境を破棄願います。</p>
+<p>PROXYのプロセスをCtrl+Cで終了させた後、構築の逆順でリソースを削除します。</p>
+<h2 id="kubertenesリソース削除">Kubertenesリソース削除</h2>
+<ol>
+<li>Ingress:    kubectl delete -f swtest-ingress.yaml</li>
+<li>Service:    kubectl delete -f swtest-service.yaml</li>
+<li>Deployment: kubectl delete -f swtest-deployment-green.yaml</li>
+<li>Deployment: kubectl delete -f swtest-deployment-blue.yaml</li>
+</ol>
+<h2 id="ingress-nginx-dashboard削除">ingress-nginx, dashboard削除</h2>
+<ol>
+<li>ingress-nginx: kubectl delete -f cloud-generic.yaml</li>
+<li>ingress-nginx: kubectl delete -f mandatory.yaml</li>
+<li>admin-user:    kubectl delete -f role_binding.yaml</li>
+<li>admin-user:    kubectl delete -f create_account.yaml</li>
+<li>dashboard:     kubectl delete -f recommended.yaml</li>
+</ol>
+<h2 id="docker-dashboardで無効化">Docker Dashboardで無効化</h2>
+<ol>
+<li>Docker DashboardのSettingでKubertenesの有効化ボタンを元に戻す</li>
+<li>「Apply&amp;Restart」ボタンを押す</li>
+</ol>
+<h2 id="不要データの削除">不要データの削除</h2>
+<ol>
+<li>Docker DashboardのTroubleshootボタンを押す</li>
+<li>「Clean / Purge data」ボタンを押す</li>
+<li>削除対象のチェックを全て付ける</li>
+<li>「Delete」ボタンを押す</li>
+</ol>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube44.png" alt=""></p>
+<br/>
+<p><img src="https://hiszuk.github.io/dockersample/images/kube45.png" alt=""></p>
+
+    </body>
+    </html>
